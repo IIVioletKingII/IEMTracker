@@ -1,0 +1,40 @@
+.record-container {
+	padding: 8px 16px;
+	margin: 1rem 2rem;
+	border-radius: 0.5rem;
+	border: 1px solid;
+
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+
+.record-container:hover {
+	transition: 150ms;
+	/* transform: scaleX(1.05) scaleY(1.5); */
+	/* transform: scale(1.005); */
+}
+
+.name {
+	flex-grow: 1;
+}
+
+button {
+	display: flex;
+	align-items: center;
+	/* border-radius: 8px; */
+	border: none;
+	padding: 0;
+	margin: 0;
+	font-size: 1em;
+	font-weight: 500;
+	font-family: inherit;
+	background-color: transparent;
+	cursor: pointer;
+	transition: border-color 0.25s;
+}
+
+button:hover {}
+
+button:focus,
+button:focus-visible {}
