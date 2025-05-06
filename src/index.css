@@ -62,3 +62,27 @@ h1 {
 		background-color: #f9f9f9;
 	}
 }
+
+
+.flex {
+	display: flex;
+}
+
+.flex.gap {
+	--gap: 2rem;
+	gap: var(--gap);
+}
+
+.align-items-center {
+	align-items: center;
+}
+
+.block {
+	margin: 2rem 0;
+	padding: 0 2rem;
+}
+
+.margin-vertical {
+	margin-top: 2rem;
+	margin-bottom: 2rem;
+}

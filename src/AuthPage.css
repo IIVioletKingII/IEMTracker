@@ -12,11 +12,10 @@
 	text-align: center;
 }
 
-.auth-page button {
+button.button {
 	border-radius: 8px;
 	border: 1px solid transparent;
 	padding: 0.6em 1.2em;
-	margin: 0 0.5rem;
 	font-size: 1em;
 	font-weight: 500;
 	font-family: inherit;
@@ -25,11 +24,10 @@
 	transition: border-color 0.25s;
 }
 
-.auth-page button:hover {
+button.button:hover {
 	border-color: #646cff;
 }
 
-.auth-page button:focus,
-.auth-page button:focus-visible {
+button.button:active {
 	outline: 4px auto -webkit-focus-ring-color;
 }
