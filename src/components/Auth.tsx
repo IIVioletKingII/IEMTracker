@@ -2,24 +2,29 @@
 
 import { useAuth } from "react-oidc-context";
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 
-export default function Auth() {
+export default memo(function Auth() {
 	const auth = useAuth();
 
 	const navigate = useNavigate();
 
 	const signOutRedirect = () => {
 		const clientId = "2pl4ha6s3afos3vfcqbcifg4b2";
-		const logoutUri = "<logout uri>";
+		const logoutUri = "/loggedout";
 		const cognitoDomain = "https://us-east-2ubvb9dhvm.auth.us-east-2.amazoncognito.com";
 		window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
 	};
 
+	console.log('auth rendor');
+
+
 	useEffect(() => {
+		console.log('effect', auth);
+
 		if (auth.isAuthenticated)
 			navigate('/home');
-	}, [navigate]);
+	}, [auth.isAuthenticated, navigate]);
 
 	if (auth.isLoading) {
 		return <div>Loading...</div>;
@@ -36,9 +41,9 @@ export default function Auth() {
 	}
 
 	return (
-		<div className="flex row justify-content-center">
+		<div className="flex row gap justify-content-center" style={({ 'gap': '1rem' })}>
 			<button className="button" onClick={() => auth.signinRedirect()}>Sign in</button>
 			<button className="button" onClick={() => signOutRedirect()}>Sign out</button>
 		</div>
 	);
-};
+});

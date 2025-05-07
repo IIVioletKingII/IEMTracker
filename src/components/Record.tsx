@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
-import './Record.css'
+import '../css/Record.css'
+import { type BorrowRecord } from '../assets/types.ts';
 
-
-type BorrowRecord = {
-	name: string,
-	checkout_date: string,
-	return_date: string,
-	earbud_type: string
-}
 
 export default function Record({ name, checkout_date, return_date, earbud_type }: BorrowRecord) {
 

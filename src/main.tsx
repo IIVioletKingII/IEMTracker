@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './css/index.css'
 import App from './App.tsx'
 import { AuthProvider } from "react-oidc-context";
 import 'material-icons/iconfont/material-icons.css';
+
 
 const cognitoAuthConfig = {
 	authority: "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_UbVB9dHVM",

@@ -9,7 +9,7 @@
 
 	--color-primary: #DFD0B8;
 	--color-secondary: #948979;
-	--color-background: #393E46;
+	--color-background: #373b41;
 	--color-surface: #222831;
 	--color-error: #b00020;
 	--color-on-primary: #ffffff;
@@ -73,8 +73,24 @@ h1 {
 	gap: var(--gap);
 }
 
+.flex.row {
+	flex-direction: row;
+}
+
+.flex.col {
+	flex-direction: column;
+}
+
 .align-items-center {
 	align-items: center;
+}
+
+.justify-content-center {
+	justify-content: center;
+}
+
+.justify-content-flex-end {
+	justify-content: flex-end;
 }
 
 .block {

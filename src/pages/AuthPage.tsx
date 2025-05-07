@@ -1,5 +1,5 @@
-import Auth from "./Auth.tsx";
-import "./AuthPage.css";
+import Auth from "../components/Auth.tsx";
+import "../css/AuthPage.css";
 
 export default function AuthPage() {
 	return (
