@@ -11,9 +11,14 @@ import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBStringOb
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+
 import TextField from '@mui/material/TextField';
 
 import { type BorrowRecord } from '../assets/types.ts';
+
+function compareDateStrings(a: BorrowRecord, b: BorrowRecord): number {
+	return new Date(b.checkout_date).getTime() - new Date(a.checkout_date).getTime();
+}
 
 export default memo(function Page() {
 	const auth = useAuth();
@@ -75,9 +80,7 @@ export default memo(function Page() {
 
 			fetchRecentBorrows(dynamoClient)
 				.then((response) => {
-					const condensed: BorrowRecord[] = response.Items?.map(flattenDBStringObject).sort(
-						(a, b) => new Date(b.checkout_date).getTime() - new Date(a.checkout_date).getTime(),
-					) ?? [];
+					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBStringObject<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
 					setItems(condensed);
 					setIsLoading(false);
 				})

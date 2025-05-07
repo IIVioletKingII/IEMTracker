@@ -1,6 +1,8 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import { DynamoDBClient, ScanCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { type BorrowRecord } from './types';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 
 const region = 'us-east-2';
 const userPoolId = 'us-east-2_UbVB9dHVM';
@@ -47,10 +49,17 @@ export async function fetchRecentBorrows(client: DynamoDBClient) {
 	return client.send(command);
 }
 
+export function flattenDBStringObject<T extends Record<string, string>>(
+	item: Record<string, AttributeValue>
+): T {
+	const result: Record<string, string> = {};
 
-export function flattenDBStringObject(item: object) {
-	const flat = {};
-	for (const key in item)
-		flat[key] = item[key].S; // only handles string values
-	return flat;
+	for (const key in item) {
+		const value = item[key];
+		if (value && 'S' in value && typeof value.S === 'string') {
+			result[key] = value.S;
+		}
+	}
+
+	return result as T;
 }

@@ -3,8 +3,11 @@ import '../css/Record.css'
 import Popup from './Popup.tsx';
 import { type BorrowRecord } from '../assets/types.ts';
 
-import { Checkbox, FormControlLabel } from '@mui/material';
+import { Checkbox } from '@mui/material';
 
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 export default function Record({ name, checkout_date, return_date, earbud_type }: BorrowRecord) {
 
@@ -13,7 +16,7 @@ export default function Record({ name, checkout_date, return_date, earbud_type }
 	const [isPopupBOpen, setIsPopupBOpen] = useState(false);
 	const [isPopupCOpen, setIsPopupCOpen] = useState(false);
 
-
+	const [inputDateTime, setInputDateTime] = useState<Date | null>(new Date(checkout_date));
 	const [checked, setChecked] = useState(return_date ? true : false);
 
 	function openPopupA() {
@@ -24,7 +27,7 @@ export default function Record({ name, checkout_date, return_date, earbud_type }
 		setIsPopupBOpen(true);
 	}
 
-	const handleChange = (event) => {
+	function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
 
 		if (event.target.checked) {
 			event.preventDefault();
@@ -46,15 +49,15 @@ export default function Record({ name, checkout_date, return_date, earbud_type }
 	}
 
 
-	function setCheckoutDate(event) {
+	function setCheckoutDate() {
 		setIsPopupAOpen(false);
 	}
 
-	function setReturnDate(event) {
+	function setReturnDate() {
 		setIsPopupBOpen(false);
 	}
 
-	function returnIEMs(event) {
+	function returnIEMs() {
 		setIsPopupCOpen(false);
 		setChecked(true);
 	}
@@ -74,7 +77,15 @@ export default function Record({ name, checkout_date, return_date, earbud_type }
 
 			<Popup isOpen={isPopupAOpen} onClose={closePopupA}>
 				<h2>Checkout Date</h2>
-
+				<LocalizationProvider dateAdapter={AdapterDateFns}>
+					<DateTimePicker
+						label="Checkout Time"
+						ampm={false} // 24-hour format
+						views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']} // include seconds
+						value={inputDateTime}
+						onChange={(newValue) => setInputDateTime(newValue)}
+					/>
+				</LocalizationProvider>
 				<div className="flex justify-content-flex-end margin-top">
 					<button className="button" onClick={setCheckoutDate}>Save</button>
 				</div>
