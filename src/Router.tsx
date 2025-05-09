@@ -1,14 +1,13 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import "./css/App.css"
+import { BrowserRouter as HashRouter, Routes, Route } from 'react-router-dom';
+import "./css/Router.css"
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useMemo } from 'react';
-
 
 import AuthPage from './pages/AuthPage.tsx'
 import HomePage from './pages/HomePage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 
-function App() {
+export default function Router() {
 
 	const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -21,16 +20,14 @@ function App() {
 
 	return (
 		<ThemeProvider theme={theme}>
-			<Router>
+			<HashRouter basename='/IEMTracker'>
 				<Routes>
 					<Route path='/' element={<AuthPage />} />
 					<Route path='/home' element={<HomePage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
-			</Router>
+			</HashRouter>
 		</ThemeProvider>
 
 	);
-}
-
-export default App;
+};

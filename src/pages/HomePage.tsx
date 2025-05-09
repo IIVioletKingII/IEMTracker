@@ -66,6 +66,10 @@ export default memo(function Page() {
 		setIsPopupOpen(false);
 	};
 
+	function goHome() {
+		navigate('/');
+	}
+
 	useEffect(() => {
 		if (!auth.isAuthenticated && !auth.isLoading) {
 			console.log('not authenticated', auth);
@@ -91,21 +95,25 @@ export default memo(function Page() {
 		}
 	}, [auth.isAuthenticated, auth.isLoading, navigate]); // Only run if authentication state changes
 
+	let message = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
 
 	return (
 		<div className="home-page">
 			<div className="header flex gap align-items-center">
-				<img src="/NL-IEM-Tracker.png" alt="NL IEM Tracker" className="home-hero" />
+				<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" className="home-hero" />
+				<button onClick={goHome}>
+					<span className='material-icons'>home</span>
+				</button>
 			</div>
 			<div className="block">
-				<div className="flex margin-vertical align-items-center">
+				<div className="flex margin-vertical align-items-center" style={({ 'justifyContent': 'spaceBetween' })}>
 
 					<div className="title">IEMs not returned</div>
 					<button className="button" onClick={openPopup}>Checkout</button>
 				</div>
 
 				{isLoading ? (
-					<span>Loading...</span>
+					<span>{message}</span>
 				) : items.map((item, index) => (
 					<Record key={index} {...item} />
 				))}
