@@ -5,7 +5,7 @@ type imports = {
 	readonly isOpen: boolean;
 	readonly onClose: () => void;
 	readonly children: React.ReactNode,
-	readonly keepAlive: boolean
+	readonly keepAlive?: boolean
 }
 
 export default function Popup({ isOpen, onClose, children, keepAlive = false }: imports) {

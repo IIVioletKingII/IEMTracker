@@ -6,7 +6,7 @@ import Record from '../components/Record.tsx';
 import '../css/HomePage.css'
 import Popup from '../components/Popup.tsx';
 
-import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBItem } from '../assets/aws.ts';
+import { getDynamoClient, fetchRecentBorrows, flattenDBItem } from '../assets/aws.ts';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
