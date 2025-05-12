@@ -1,0 +1,13 @@
+.hero-page-hero {
+	--margin: 5rem;
+	margin: var(--margin);
+	min-width: 300px;
+	width: calc(60% - var(--margin));
+
+}
+
+.hero-page {
+	margin-top: 10%;
+	padding: 2rem;
+	text-align: center;
+}

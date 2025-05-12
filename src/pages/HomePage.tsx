@@ -6,7 +6,7 @@ import Record from '../components/Record.tsx';
 import '../css/HomePage.css'
 import Popup from '../components/Popup.tsx';
 
-import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBStringObject } from '../assets/aws.ts';
+import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBItem } from '../assets/aws.ts';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -29,32 +29,6 @@ export default memo(function Page() {
 	const [inputType, setInputType] = useState('');
 	const [inputDateTime, setInputDateTime] = useState<Date | null>(new Date());
 
-	function getCheckoutInfo(): BorrowRecord {
-		return {
-			name: inputName,
-			checkout_date: inputDateTime ? inputDateTime.toJSON() : new Date().toJSON(),
-			return_date: '',
-			earbud_type: inputType
-		};
-	}
-
-	async function checkoutBud() {
-		const newItem = getCheckoutInfo();
-		setItems((prevItems) => [newItem, ...prevItems]);
-
-		if (auth.isAuthenticated && auth.user?.id_token) {
-			const idToken = auth.user.id_token;
-			const dynamoClient = getDynamoClient(idToken);
-
-			try {
-				await putBorrowRecord(dynamoClient, newItem);
-				console.log('Item added successfully');
-			} catch (error) {
-				console.error('Failed to add item to DynamoDB:', error);
-			}
-		}
-	}
-
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 
 	const openPopup = () => {
@@ -67,13 +41,13 @@ export default memo(function Page() {
 	};
 
 	function goHome() {
-		navigate('/');
+		navigate('/', { 'state': { 'fromInsideApp': true } });
 	}
 
 	useEffect(() => {
 		if (!auth.isAuthenticated && !auth.isLoading) {
 			console.log('not authenticated', auth);
-			navigate('/');
+			navigate('/', { 'state': { 'fromInsideApp': true } });
 			return;
 		}
 
@@ -84,7 +58,7 @@ export default memo(function Page() {
 
 			fetchRecentBorrows(dynamoClient)
 				.then((response) => {
-					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBStringObject<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
+					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
 					setItems(condensed);
 					setIsLoading(false);
 				})
@@ -95,7 +69,7 @@ export default memo(function Page() {
 		}
 	}, [auth.isAuthenticated, auth.isLoading, navigate]); // Only run if authentication state changes
 
-	let message = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
+	const message = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
 
 	return (
 		<div className="home-page">
@@ -106,22 +80,21 @@ export default memo(function Page() {
 				</button>
 			</div>
 			<div className="block">
-				<div className="flex margin-vertical align-items-center" style={({ 'justifyContent': 'spaceBetween' })}>
+				<div className="flex margin-vertical align-items-center justify-content-space-between">
 
 					<div className="title">IEMs not returned</div>
-					<button className="button" onClick={openPopup}>Checkout</button>
 				</div>
 
 				{isLoading ? (
 					<span>{message}</span>
 				) : items.map((item, index) => (
-					<Record key={index} {...item} />
+					<Record key={index} record={item} admin={false} />
 				))}
 			</div>
 			<Popup isOpen={isPopupOpen} onClose={closePopup}>
 				<h2>Checkout IEMs</h2>
 				<p>This is the content of the popup.</p>
-				<div className="flex col gap" style={({ 'gap': '1rem' })}>
+				<div className="flex col gap">
 					<TextField label="Name"
 						variant="outlined"
 						value={inputName}
@@ -141,9 +114,6 @@ export default memo(function Page() {
 							onChange={(newValue) => setInputDateTime(newValue)}
 						/>
 					</LocalizationProvider>
-					<div className="flex justify-content-flex-end" >
-						<button className="button" onClick={checkoutBud}>Checkout</button>
-					</div>
 				</div>
 
 				{/* <button onClick={closePopup}>Close</button> */}

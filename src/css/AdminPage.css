@@ -1,0 +1,22 @@
+.header {
+	width: 100%;
+	height: 64px;
+	/* padding: 0 2rem; */
+	overflow: hidden;
+	background-color: var(--color-surface);
+	justify-content: space-between;
+}
+
+.header img,
+.header button {
+	padding: 0 2rem;
+}
+
+.home-hero {
+	height: 70%;
+}
+
+.title {
+	font-size: 18px;
+	flex-grow: 1;
+}

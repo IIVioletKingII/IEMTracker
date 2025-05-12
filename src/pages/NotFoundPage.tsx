@@ -1,12 +1,12 @@
-import '../css/HomePage.css'
 import { useNavigate } from 'react-router-dom';
+import '../css/AdminPage.css'
 
 export default function NotFoundPage() {
 
 	const navigate = useNavigate();
 
 	function goHome() {
-		navigate('/');
+		navigate('/', { 'state': { 'fromInsideApp': true } });
 	}
 
 	return (

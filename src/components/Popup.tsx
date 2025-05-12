@@ -1,7 +1,13 @@
 import React, { useEffect } from 'react';
 import '../css/Popup.css';
 
-const Popup = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
+type imports = {
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
+	readonly children: React.ReactNode
+}
+
+export default function Popup({ isOpen, onClose, children }: imports) {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -39,6 +45,4 @@ const Popup = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => 
 			</div>
 		</div>
 	);
-};
-
-export default Popup;
+};;

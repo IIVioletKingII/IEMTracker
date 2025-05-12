@@ -3,9 +3,12 @@ import "./css/Router.css"
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useMemo } from 'react';
 
-import AuthPage from './pages/AuthPage.tsx'
+import Auth from "./components/Auth.tsx";
+import AuthPage from './pages/HeroPage.tsx'
 import HomePage from './pages/HomePage.tsx';
+import AdminPage from './pages/AdminPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function Router() {
 
@@ -22,8 +25,23 @@ export default function Router() {
 		<ThemeProvider theme={theme}>
 			<HashRouter basename='/IEMTracker'>
 				<Routes>
-					<Route path='/' element={<AuthPage />} />
-					<Route path='/home' element={<HomePage />} />
+					<Route
+						path='/'
+						element={
+							<AuthPage>
+								<Auth />
+							</AuthPage>
+						}
+					/>
+					<Route
+						path='/home'
+						element={
+							<ProtectedRoute>
+								<HomePage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route path='/admin' element={<AdminPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</HashRouter>
