@@ -25,7 +25,7 @@ const URI = import.meta.env.VITE_PUBLIC_URI;
 
 export default memo(function Page() {
 	const canvasRef = useRef(null);
-	const [qrCodeUpdated, setQRCodeUpdated] = useState(new Date());
+	const [qrCodeUpdated, setQRCodeUpdated] = useState(new Date(0));
 	const auth = useAuth();
 	const navigate = useNavigate();
 	const [items, setItems] = useState<BorrowRecord[]>([]);
@@ -99,10 +99,10 @@ export default memo(function Page() {
 
 	function openQRCodePopup() {
 		setIsQRPopupOpen(true);
-		// let yesterday = new Date();
-		// yesterday.setDate(yesterday.getDate() - 1);
-		// if (qrCodeUpdated < yesterday)
-		createQRCode();
+		let yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+		if (qrCodeUpdated < yesterday)
+			createQRCode();
 	}
 
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -163,7 +163,7 @@ export default memo(function Page() {
 				</button>
 			</div>
 			<div className="block">
-				<div className="flex margin-vertical align-items-center gap" style={({ 'justifyContent': 'spaceBetween' })}>
+				<div className="flex margin-vertical align-items-center gap justify-content-space-between">
 
 					<div className="title">IEMs not returned</div>
 					<button onClick={openQRCodePopup}>
@@ -181,21 +181,18 @@ export default memo(function Page() {
 				))}
 			</div>
 
-			<Popup isOpen={isQRPopupOpen} onClose={closeQRPopup}>
+			<Popup isOpen={isQRPopupOpen} onClose={closeQRPopup} keepAlive={true}>
 				<h2>Checkout IEMs</h2>
 				<div className="flex col gap" style={({ 'gap': '1rem' })}>
 					<canvas ref={canvasRef} />
-					<div className="flex justify-content-flex-end" >
+					<div className="flex justify-content-flex-end">
 						<button className="button" onClick={createQRCode}>Refresh</button>
 					</div>
 				</div>
-
-				{/* <button onClick={closePopup}>Close</button> */}
 			</Popup>
 
 			<Popup isOpen={isPopupOpen} onClose={closePopup}>
 				<h2>Checkout IEMs</h2>
-				<p>This is the content of the popup.</p>
 				<div className="flex col gap" style={({ 'gap': '1rem' })}>
 					<TextField label="Name"
 						variant="outlined"

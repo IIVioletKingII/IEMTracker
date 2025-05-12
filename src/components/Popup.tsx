@@ -4,10 +4,11 @@ import '../css/Popup.css';
 type imports = {
 	readonly isOpen: boolean;
 	readonly onClose: () => void;
-	readonly children: React.ReactNode
+	readonly children: React.ReactNode,
+	readonly keepAlive: boolean
 }
 
-export default function Popup({ isOpen, onClose, children }: imports) {
+export default function Popup({ isOpen, onClose, children, keepAlive = false }: imports) {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,12 +32,13 @@ export default function Popup({ isOpen, onClose, children }: imports) {
 		};
 	}, [onClose]);
 
-	if (!isOpen) {
+	if (!isOpen && !keepAlive) {
 		return null;
 	}
 
+	const hiddenClass = (!isOpen && keepAlive) && 'hidden';
 	return (
-		<div className="popup-overlay">
+		<div className={`popup-overlay ${hiddenClass}`}>
 			<div className="popup-content">
 				<button className="popup-close" onClick={onClose}>
 					<span className="material-icons">close</span>
