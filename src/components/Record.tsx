@@ -9,6 +9,16 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
+const dateFormat = {
+	hour12: false,  // Forces 24-hour time
+	// hour: '2-digit',
+	// minute: '2-digit',
+	// second: '2-digit',
+	// year: 'numeric',
+	// month: '2-digit',
+	// day: '2-digit',
+};
+
 export default function Record({ record, admin }: { record: BorrowRecord, admin: boolean }) {
 
 	/* 
@@ -88,7 +98,10 @@ return_date -> string;
 			<button onClick={openPopupB}>
 				<span className="material-icons">event_available</span>
 			</button>
-			<Checkbox checked={returned} onChange={handleChange} />
+			{admin ? (
+				<Checkbox checked={returned} onChange={handleChange} />) : (
+				<span>Return by {returnBy.toLocaleString(/* undefined, dateFormat */)}</span>
+			)}
 
 			<Popup isOpen={isPopupAOpen} onClose={closePopupA}>
 				<h2>Checkout Date</h2>
