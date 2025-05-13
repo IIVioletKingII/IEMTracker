@@ -3,8 +3,10 @@ import { type ReactNode } from 'react';
 export type BorrowRecord = {
 	name: string,
 	checkout_date: string,
+	checkout_user_id: string,
+	earbud_type: string,
+	return_by: string,
 	return_date: string,
-	earbud_type: string
 }
 
 export type Token = {
@@ -14,7 +16,6 @@ export type Token = {
 	created_by_name: string
 }
 
-
 export type ComponentProps = {
-	children?: ReactNode;
+	readonly children?: ReactNode;
 };

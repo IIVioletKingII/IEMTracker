@@ -124,10 +124,15 @@ h1 {
 	transition: border-color 0.25s;
 }
 
-.button:hover {
+.button:disabled {
+	opacity: 0.8;
+	cursor: auto;
+}
+
+.button:hover:not(:disabled) {
 	border-color: #646cff;
 }
 
-.button:active {
+.button:active:not(:disabled) {
 	outline: 4px auto -webkit-focus-ring-color;
 }

@@ -9,6 +9,10 @@
 	gap: 1rem;
 }
 
+.record-container.late {
+	border-color: red;
+}
+
 .record-container:hover {
 	transition: 150ms;
 	/* transform: scaleX(1.05) scaleY(1.5); */

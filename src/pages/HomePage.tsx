@@ -2,15 +2,17 @@ import { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "react-oidc-context";
 
-import Record from '../components/Record.tsx';
-import '../css/HomePage.css'
-import Popup from '../components/Popup.tsx';
-
-import { getDynamoClient, fetchRecentBorrows, flattenDBItem } from '../assets/aws.ts';
+import { getDynamoClient, fetchUserBorrows, flattenDBItem } from '../assets/aws.ts';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+
+import '../css/HomePage.css'
+import Record from '../components/Record.tsx';
+import Popup from '../components/Popup.tsx';
+import Navbar from '../components/Navbar.tsx';
+import Accordion from '../components/Accordion.tsx';
 
 import TextField from '@mui/material/TextField';
 
@@ -24,6 +26,7 @@ export default memo(function Page() {
 	const auth = useAuth();
 	const navigate = useNavigate();
 	const [items, setItems] = useState<BorrowRecord[]>([]);
+	const [returnedItems, setReturnedItems] = useState<BorrowRecord[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [inputName, setInputName] = useState('');
 	const [inputType, setInputType] = useState('');
@@ -40,60 +43,84 @@ export default memo(function Page() {
 		setIsPopupOpen(false);
 	};
 
-	function goHome() {
-		navigate('/', { 'state': { 'fromInsideApp': true } });
+	function fetchMyBorrows(idToken: string, user_id: string) {
+
+		const dynamoClient = getDynamoClient(idToken);
+
+		fetchUserBorrows(dynamoClient, user_id)
+			.then((response) => {
+				const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
+
+				// const returnedItems = condensed.filter(item => item.return_date?.trim() !== '');
+				// const items = condensed.filter(item => !item.return_date || item.return_date.trim() === '');
+
+				const [items, returnedItems] = condensed.reduce<[BorrowRecord[], BorrowRecord[]]>(
+					([items, returned], item) => {
+						if (item.return_date?.trim())
+							returned.push(item);
+						else
+							items.push(item);
+						return [items, returned];
+					},
+					[[], []]
+				);
+
+				setItems(items);
+				setReturnedItems(returnedItems);
+				setIsLoading(false);
+			})
+			.catch((error) => {
+				console.error('DynamoDB error:', error);
+				setIsLoading(false);
+			});
 	}
 
 	useEffect(() => {
 		if (!auth.isAuthenticated && !auth.isLoading) {
 			console.log('not authenticated', auth);
 			navigate('/', { 'state': { 'fromInsideApp': true } });
-			return;
+			return; // Proceed only if authenticated
 		}
 
-		// Proceed only if authenticated
-		if (auth.isAuthenticated && auth.user?.id_token) {
+		const user_id = auth.user?.profile['cognito:username'];
+		if (auth.isAuthenticated && auth.user?.id_token && typeof user_id == 'string') {
 			const idToken = auth.user.id_token;
-			const dynamoClient = getDynamoClient(idToken);
 
-			fetchRecentBorrows(dynamoClient)
-				.then((response) => {
-					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
-					setItems(condensed);
-					setIsLoading(false);
-				})
-				.catch((error) => {
-					console.error('DynamoDB error:', error);
-					setIsLoading(false);
-				});
+			fetchMyBorrows(idToken, user_id)
 		}
 	}, [auth.isAuthenticated, auth.isLoading, navigate]); // Only run if authentication state changes
 
-	const message = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
+
+	const infoMessage = items.length ? 'IEMs not returned' : 'No IEM checkout history.'
+	const loadingMessage = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
 
 	return (
 		<div className="home-page">
-			<div className="header flex gap align-items-center">
-				<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" className="home-hero" />
-				<button onClick={goHome}>
-					<span className='material-icons'>home</span>
-				</button>
-			</div>
+			<Navbar />
 			<div className="block">
 				<div className="flex margin-vertical align-items-center justify-content-space-between">
-
-					<div className="title">IEMs not returned</div>
+					<div className="title">{infoMessage}</div>
+					<div>Red: late</div>
 				</div>
 
 				{isLoading ? (
-					<span>{message}</span>
-				) : items.map((item, index) => (
-					<Record key={index} record={item} admin={false} />
-				))}
+					<span>{loadingMessage}</span>
+				) : (
+					<div className="container">
+						{items.map((item, index) => (
+							<Record key={index} record={item} admin={false} />
+						))}
+						<Accordion title='Returned IEMs'>
+							{returnedItems.map((item, index) => (
+								<Record key={index} record={item} admin={false} />
+							))}
+						</Accordion>
+					</div>
+				)}
+
 			</div>
 			<Popup isOpen={isPopupOpen} onClose={closePopup}>
 				<h2>Checkout IEMs</h2>
-				<p>This is the content of the popup.</p>
 				<div className="flex col gap">
 					<TextField label="Name"
 						variant="outlined"

@@ -19,7 +19,7 @@ export default function AuthPage({ children }: ComponentProps) {
 
 		return (
 			<HeroPage>
-				Authenticating...
+				<span>Authenticating...</span>
 			</HeroPage>
 		);
 	}

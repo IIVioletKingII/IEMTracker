@@ -16,22 +16,18 @@ export default memo(function Auth() {
 	const location = useLocation();
 	const fromInsideApp: boolean = location.state?.fromInsideApp;
 
-	const signOutRedirect = () => {
-		const clientId = "2pl4ha6s3afos3vfcqbcifg4b2";
-		const logoutUri = `${URI}loggedout`;
-		const cognitoDomain = "https://us-east-2ubvb9dhvm.auth.us-east-2.amazoncognito.com";
+	async function signOutRedirect() {
+
+		await auth.removeUser();
+		auth.revokeTokens();
+
+		const clientId = "7or71c2o1m4ji460vpkf52ae15";
+		const logoutUri = `${URI}/signout`;
+		const cognitoDomain = "https://us-east-2bzevjhlih.auth.us-east-2.amazoncognito.com";
 		window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
 	};
 
 	console.log('auth rendor', auth);
-
-	function homePage() {
-		navigate('/home', { 'state': { 'fromInsideApp': true } });
-	}
-
-	function adminPage() {
-		navigate('/admin', { 'state': { 'fromInsideApp': true } });
-	}
 
 	useEffect(() => {
 		console.log('effect', auth);
@@ -58,15 +54,11 @@ export default memo(function Auth() {
 				: [];
 			const isAdmin: boolean = groups.includes('Admins');
 
-			// const attrs = getUserAttributes(auth.user?.access_token ?? '');
-			// console.log('attrs', attrs);
-
 			return (
 				<div className="flex row gap justify-content-center">
-					<Link className="button" to="/home">Home</Link>
-					<Link className="button" to="/profile" aria-disabled>Profile</Link>
-
-					{isAdmin && <Link className="button" to="/admin">Admin</Link>}
+					<Link className="button" to="/home" state={{ 'fromInsideApp': true }}>Home</Link>
+					<Link className="button" to="/profile" state={{ 'fromInsideApp': true }}>Profile</Link>
+					{isAdmin && <Link className="button" to="/admin" state={{ 'fromInsideApp': true }}>Admin</Link>}
 					<button className="button" onClick={() => signOutRedirect()}>Sign out</button>
 
 

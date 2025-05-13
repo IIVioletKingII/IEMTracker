@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "react-oidc-context";
 import QRCode from 'qrcode';
 
-import Record from '../components/Record.tsx';
 import '../css/AdminPage.css'
+import Record from '../components/Record.tsx';
 import Popup from '../components/Popup.tsx';
 
 import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBItem, putToken } from '../assets/aws.ts';
@@ -85,7 +85,7 @@ export default memo(function Page() {
 				console.log('Item added successfully');
 
 				if (canvasRef.current) {
-					const qrText = `${URI}home?token=${newItem.token}`;
+					const qrText = `${URI}/checkout?token=${newItem.token}`;
 					QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'H' }, (error: any) => {
 						if (error) console.error(error);
 					});

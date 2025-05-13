@@ -1,13 +1,13 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import { CognitoIdentityProviderClient, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
-
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+
 import { type BorrowRecord, type Token } from './types';
 
-const region = 'us-east-2';
-const userPoolId = 'us-east-2_UbVB9dHVM';
-const identityPoolId = 'us-east-2:fe8b1af6-470c-458e-815a-79a6549d96e0';
+import { region, userPoolId, identityPoolId } from './security';
+import { id } from 'date-fns/locale';
 
 export async function getUserAttributes(accessToken: string) {
 	const client = new CognitoIdentityProviderClient({ region });
@@ -33,16 +33,40 @@ export async function updateUserAttributes(accessToken: string, userAttributes: 
 	return client.send(command);
 }
 
-export function getDynamoClient(idToken: string) {
-	const credentials = fromCognitoIdentityPool({
+export async function invokeCheckoutEIMs(idToken: string, payload: object) {
+	const lambdaClient = new LambdaClient({ region, credentials: getCredentials(idToken) });
+
+	// Prepare the command
+	const command = new InvokeCommand({
+		FunctionName: 'checkout-iems', // Replace with your Lambda function's name
+		Payload: new TextEncoder().encode(JSON.stringify(payload)),
+	});
+
+	// Call the Lambda
+	try {
+		const response = await lambdaClient.send(command);
+		const responsePayload = JSON.parse(new TextDecoder().decode(response.Payload));
+		return responsePayload;
+	} catch (err) {
+		console.error('Error calling Lambda:', err);
+		return {
+			statusCode: 400
+		};
+	}
+}
+
+function getCredentials(idToken: string) {
+	return fromCognitoIdentityPool({
 		identityPoolId,
 		clientConfig: { region },
 		logins: {
 			[`cognito-idp.${region}.amazonaws.com/${userPoolId}`]: idToken,
 		},
 	});
+}
 
-	return new DynamoDBClient({ region, credentials });
+export function getDynamoClient(idToken: string) {
+	return new DynamoDBClient({ region, credentials: getCredentials(idToken) });
 }
 
 // ------ EarbudBorrows ------
@@ -76,16 +100,29 @@ export async function fetchRecentBorrows(client: DynamoDBClient) {
 }
 
 
-// ------ Tokens ------
-export async function fetchTokens(client: DynamoDBClient) {
-	let fiveDaysAgo = new Date();
-	fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+export async function fetchUserBorrows(client: DynamoDBClient, user_id: string) {
 
 	const command = new ScanCommand({
 		TableName: 'EarbudBorrows',
+		FilterExpression: 'checkout_user_id = :user_id',
+		ExpressionAttributeValues: {
+			':user_id': { S: user_id },
+		},
+	});
+
+	return client.send(command);
+}
+
+// ------ Tokens ------
+export async function fetchTokens(client: DynamoDBClient) {
+	let createdAfter = new Date();
+	createdAfter.setDate(createdAfter.getDate() - 1);
+
+	const command = new ScanCommand({
+		TableName: 'Tokens',
 		FilterExpression: 'date_created > :start',
 		ExpressionAttributeValues: {
-			':start': { S: fiveDaysAgo.toJSON() },
+			':start': { S: createdAfter.toJSON() },
 		},
 	});
 

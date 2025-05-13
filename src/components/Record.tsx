@@ -11,13 +11,28 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 export default function Record({ record, admin }: { record: BorrowRecord, admin: boolean }) {
 
+	/* 
+name -> string;
+checkout_date -> string;
+checkout_user_id -> string;
+earbud_type -> string;
+return_by -> string;
+return_date -> string;
+	*/
 
 	const [isPopupAOpen, setIsPopupAOpen] = useState(false);
 	const [isPopupBOpen, setIsPopupBOpen] = useState(false);
 	const [isPopupCOpen, setIsPopupCOpen] = useState(false);
 
 	const [inputDateTime, setInputDateTime] = useState<Date | null>(new Date(record.checkout_date));
-	const [checked, setChecked] = useState(record.return_date ? true : false);
+	const [returned, setReturned] = useState(record.return_date ? true : false);
+
+
+	const returnBy = new Date(record.return_by);
+	const late = !returned && new Date() > returnBy;
+
+	// console.log('returned', returned);
+	// console.log('late', late, returnBy);
 
 	function openPopupA() {
 		setIsPopupAOpen(true);
@@ -33,7 +48,7 @@ export default function Record({ record, admin }: { record: BorrowRecord, admin:
 			event.preventDefault();
 			setIsPopupCOpen(true);
 		} else
-			setChecked(event.target.checked);
+			setReturned(event.target.checked);
 	};
 
 	function closePopupA() {
@@ -59,11 +74,11 @@ export default function Record({ record, admin }: { record: BorrowRecord, admin:
 
 	function returnIEMs() {
 		setIsPopupCOpen(false);
-		setChecked(true);
+		setReturned(true);
 	}
 
 	return (
-		<div className="record-container align-items-center">
+		<div className={`record-container align-items-center ${late ? 'late' : ''}`}>
 			<span className="material-icons">headphones</span>
 			<span className="name">{record.name}</span>
 			<span className="type">{record.earbud_type}</span>
@@ -73,7 +88,7 @@ export default function Record({ record, admin }: { record: BorrowRecord, admin:
 			<button onClick={openPopupB}>
 				<span className="material-icons">event_available</span>
 			</button>
-			<Checkbox checked={checked} onChange={handleChange} />
+			<Checkbox checked={returned} onChange={handleChange} />
 
 			<Popup isOpen={isPopupAOpen} onClose={closePopupA}>
 				<h2>Checkout Date</h2>

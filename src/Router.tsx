@@ -9,6 +9,9 @@ import HomePage from './pages/HomePage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfilePage from './pages/ProfilePage.tsx';
+import SignoutPage from './pages/SignoutPage.tsx';
+import CheckoutPage from './pages/CheckoutPage.tsx';
 
 export default function Router() {
 
@@ -41,7 +44,31 @@ export default function Router() {
 							</ProtectedRoute>
 						}
 					/>
-					<Route path='/admin' element={<AdminPage />} />
+					<Route
+						path='/checkout'
+						element={
+							<ProtectedRoute>
+								<CheckoutPage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path='/admin'
+						element={
+							<ProtectedRoute>
+								<AdminPage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path='/profile'
+						element={
+							<ProtectedRoute>
+								<ProfilePage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route path='/signout' element={<SignoutPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</HashRouter>

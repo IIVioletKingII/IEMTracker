@@ -16,6 +16,7 @@
 		"@aws-sdk/client-cognito-identity": "^3.803.0",
 		"@aws-sdk/client-cognito-identity-provider": "^3.806.0",
 		"@aws-sdk/client-dynamodb": "^3.803.0",
+		"@aws-sdk/client-lambda": "^3.808.0",
 		"@aws-sdk/credential-provider-cognito-identity": "^3.803.0",
 		"@date-io/date-fns": "^3.2.1",
 		"@emotion/react": "^11.14.0",
@@ -36,6 +37,7 @@
 	"devDependencies": {
 		"@eslint/js": "^9.25.0",
 		"@types/node": "^22.15.15",
+		"@types/qrcode": "^1.5.5",
 		"@types/react": "^19.1.2",
 		"@types/react-dom": "^19.1.2",
 		"@vitejs/plugin-react": "^4.4.1",

@@ -1,0 +1,39 @@
+/* Accordion.css */
+.accordion {
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	margin: 16px 0;
+	overflow: hidden;
+	font-family: sans-serif;
+}
+
+.accordion-header {
+	width: 100%;
+	padding: 12px 16px;
+	/* background-color: #f7f7f7; */
+	border: none;
+	outline: none;
+	text-align: left;
+	font-size: 16px;
+	font-weight: bold;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+}
+
+.accordion-icon {
+	transition: transform 0.3s ease;
+	transform: rotate(90deg);
+}
+
+.accordion-icon.open {
+	transform: rotate(-90deg);
+}
+
+.accordion-content {
+	padding: 0 16px;
+	/* margin: 16px 0; */
+	/* background-color: #fff; */
+	border-top: 1px solid #ccc;
+}

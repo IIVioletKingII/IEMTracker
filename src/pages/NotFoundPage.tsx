@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import '../css/AdminPage.css'
+import Navbar from '../components/Navbar';
 
 export default function NotFoundPage() {
 
@@ -11,6 +12,7 @@ export default function NotFoundPage() {
 
 	return (
 		<div className="page" data-name="not-found">
+			<Navbar />
 			<div className="block">
 				<div className="flex margin-vertical align-items-center">
 
