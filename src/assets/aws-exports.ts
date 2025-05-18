@@ -1,5 +1,6 @@
 import { region, userPoolId, userPoolWebClientId } from './security.ts';
-const URI = import.meta.env.VITE_PUBLIC_URI;
+
+// const URI = import.meta.env.VITE_PUBLIC_URI;
 
 
 export interface AmplifyAuthConfig {

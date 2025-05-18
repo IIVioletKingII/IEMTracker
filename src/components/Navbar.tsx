@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import '../css/Navbar.css';
 import type { ReactNode } from 'react';
 
-export default function Navbar({ children }: { readonly children: ReactNode }) {
+export default function Navbar({ children }: { children: ReactNode }) {
 	const navigate = useNavigate();
 
 	function goHome() {

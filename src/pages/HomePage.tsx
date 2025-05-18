@@ -1,6 +1,4 @@
 import { useState, useEffect, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from "react-oidc-context";
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 import { getDynamoClientCreds, fetchUserBorrows, flattenDBItem } from '../assets/aws.ts';
@@ -26,7 +24,8 @@ function compareDateStrings(a: BorrowRecord, b: BorrowRecord): number {
 
 export default memo(function Page() {
 
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
+	// const infoRef = useRef<FetchUserAttributesOutput>({})
 	const [items, setItems] = useState<BorrowRecord[]>([]);
 	const [returnedItems, setReturnedItems] = useState<BorrowRecord[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -36,10 +35,10 @@ export default memo(function Page() {
 
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-	const openPopup = () => {
-		setInputDateTime(new Date());
-		setIsPopupOpen(true);
-	};
+	// const openPopup = () => {
+	// 	setInputDateTime(new Date());
+	// 	setIsPopupOpen(true);
+	// };
 
 	const closePopup = () => {
 		setIsPopupOpen(false);
@@ -80,13 +79,12 @@ export default memo(function Page() {
 	async function init() {
 
 		const session = await fetchAuthSession();
-		const idToken = session.tokens?.idToken?.payload;
+		const profile = session.tokens?.idToken?.payload;
 		if (session.credentials
-			&& typeof idToken == 'object'
-			// && Array.isArray(idToken['cognito:groups'])
-			&& typeof idToken.sub == 'string'
+			&& profile
+			&& typeof profile.sub == 'string'
 		) {
-			fetchMyBorrows(session.credentials, idToken.sub);
+			fetchMyBorrows(session.credentials, profile.sub);
 		}
 	}
 
@@ -94,12 +92,11 @@ export default memo(function Page() {
 		init();
 	}, []);
 
-	const infoMessage = items.length ? 'IEMs not returned' : 'No IEM checkout history.'
-	const loadingMessage = /* !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' :  */'Loading...';
+	const infoMessage = items.length ? 'IEMs not returned' : 'No IEM checkout history.';
 
 	return (
 		<div className="home-page">
-			<Navbar>Home</Navbar>
+			<Navbar><h2>Home</h2></Navbar>
 			<div className="block">
 				<div className="flex margin-vertical align-items-center justify-content-space-between">
 					<div className="title">{infoMessage}</div>
@@ -107,7 +104,7 @@ export default memo(function Page() {
 				</div>
 
 				{isLoading ? (
-					<span>{loadingMessage}</span>
+					<span>Loading...</span>
 				) : (
 					<div className="container">
 						{items.map((item, index) => (

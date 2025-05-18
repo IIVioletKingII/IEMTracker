@@ -1,14 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { AuthProvider } from "react-oidc-context";
 import 'material-icons/iconfont/material-icons.css';
-import { cognitoAuthConfig, region, userPoolId, userPoolWebClientId, identityPoolId } from './assets/security.ts';
+import { userPoolId, userPoolWebClientId, identityPoolId } from './assets/security.ts';
 
 import './css/index.css'
 import Router from './Router.tsx'
 
 import { Amplify } from 'aws-amplify';
-import awsconfig from './assets/aws-exports';
+
 Amplify.configure({
 	Auth: {
 		Cognito: {

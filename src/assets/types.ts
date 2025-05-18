@@ -19,3 +19,18 @@ export type Token = {
 export type ComponentProps = {
 	readonly children?: ReactNode;
 };
+
+export type UserAttributes = {
+	email?: string;
+	email_verified?: string;
+	phone_number?: string;
+	phone_number_verified?: string;
+	name?: string;
+	given_name?: string;
+	family_name?: string;
+	birthdate?: string;
+	gender?: string;
+	locale?: string;
+	preferred_username?: string;
+	[key: string]: string | undefined; // allows custom attributes like 'custom:role'
+}

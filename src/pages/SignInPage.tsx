@@ -12,6 +12,10 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from 'react-router-dom';
 
+type urlParams = {
+	token?: string;
+	[key: string]: string | undefined;
+}
 
 const SignIn: React.FC = () => {
 
@@ -22,6 +26,8 @@ const SignIn: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [loadingIn, setLoadingIn] = useState(false);
 	const [loadingOut, setLoadingOut] = useState(false);
+
+	// const paramsRef = useRef<urlParams>({});
 
 	const [showPassword, setShowPassword] = React.useState(false);
 
@@ -42,7 +48,13 @@ const SignIn: React.FC = () => {
 			const user = await signIn({ username, password });
 			console.log('User successfully signed in:', user);
 			// Redirect or update UI here after successful sign-in
-			navigate('/');
+			const params: urlParams = Object.fromEntries(new URLSearchParams(window.location.search));
+			console.log('sign in params', params);
+
+			if (params.redirect)
+				window.location.href = params.redirect;
+			else
+				navigate('/');
 		} catch (err: any) {
 			setError(err.message ?? 'Error signing in');
 		} finally {
@@ -61,7 +73,7 @@ const SignIn: React.FC = () => {
 
 	return (
 		<div className='signin-page'>
-			<Navbar />
+			<Navbar><h2>Sing In</h2></Navbar>
 			<div className="block">
 				<div className="flex col gap justify-content-center">
 
@@ -113,6 +125,9 @@ const SignIn: React.FC = () => {
 						</button>
 						<button className='button' onClick={handleSignOut} disabled={loadingOut}>
 							{loadingOut ? 'Signing out...' : 'Sign out'}
+						</button>
+						<button className='button' onClick={handleSignOut} disabled={loadingOut}>
+							Create Account
 						</button>
 					</div>
 				</div>

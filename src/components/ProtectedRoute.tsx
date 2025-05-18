@@ -5,16 +5,18 @@ import { type ComponentProps } from '../assets/types';
 import HeroPage from '../pages/HeroPage';
 import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 
-
-
+const URI = import.meta.env.VITE_PUBLIC_URI;
 
 export default function ProtectedRoute({ children }: ComponentProps) {
 	const navigate = useNavigate();
 
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [authStatus, setAuthStatus] = useState({
+		isAuthenticated: false,
+		isLoading: true,
+	});
 
 	async function init() {
+
 		try {
 			const user = await getCurrentUser();
 			console.log('User is logged in:', user);
@@ -25,15 +27,18 @@ export default function ProtectedRoute({ children }: ComponentProps) {
 		try {
 			const session = await fetchAuthSession();
 			console.log('session:', session);
-
-			if (session.tokens)
-				setIsAuthenticated(true);
+			setAuthStatus({
+				isAuthenticated: !!session.tokens,
+				isLoading: false,
+			});
 
 		} catch (sessionError) {
 			console.error('Session fetch failed:', sessionError);
+			setAuthStatus({
+				isAuthenticated: false,
+				isLoading: false,
+			});
 		}
-
-		setIsLoading(false);
 	}
 
 	useEffect(() => {
@@ -41,12 +46,17 @@ export default function ProtectedRoute({ children }: ComponentProps) {
 	}, []);
 
 	useEffect(() => {
-		if (!isAuthenticated && !isLoading)
-			navigate('/', { state: { fromInsideApp: true } });
+		if (!authStatus.isAuthenticated && !authStatus.isLoading) {
+			const currentURL = window.location.href;
+			if (currentURL.includes('token'))
+				window.location.href = `${URI}/signin?redirect=${currentURL}`;
+			else
+				navigate('/', { state: { fromInsideApp: true } });
+		}
 
-	}, [isAuthenticated, isLoading, navigate]);
+	}, [authStatus, navigate]);
 
-	if (!isAuthenticated && isLoading) {
+	if (authStatus.isLoading) {
 		return (
 			<HeroPage>
 				<span>Authenticating...</span>

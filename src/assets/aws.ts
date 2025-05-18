@@ -1,10 +1,10 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-import { CognitoIdentityProviderClient, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand, type AttributeType } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
-import { type BorrowRecord, type Token } from './types';
+import type { BorrowRecord, Token, UserAttributes } from './types';
 
 import { region, userPoolId, identityPoolId } from './security';
 import type { AwsCredentialIdentity } from "@aws-sdk/types";
@@ -24,7 +24,7 @@ export async function getUserAttributes(accessToken: string) {
 	const client = new CognitoIdentityProviderClient({ region });
 
 	const command = new GetUserCommand({
-		AccessToken: accessToken
+		'AccessToken': accessToken
 	});
 
 	return client.send(command);
@@ -34,23 +34,23 @@ export async function updateUserAttributes(accessToken: string, userAttributes: 
 	const client = new CognitoIdentityProviderClient({ region });
 
 	const command = new UpdateUserAttributesCommand({
-		AccessToken: accessToken,
-		UserAttributes: Object.keys(userAttributes)
-			.map(key => ({ Name: key, Value: userAttributes[key] }))
-		// { Name: 'given_name', Value: 'John' },
-		// { Name: 'family_name', Value: 'Doe' }
+		'AccessToken': accessToken,
+		'UserAttributes': Object.keys(userAttributes).map(key => ({
+			'Name': key,
+			'Value': userAttributes[key]
+		}))
 	});
 
 	return client.send(command);
 }
 
-export async function invokeCheckoutEIMs(idToken: string, payload: object) {
-	const lambdaClient = new LambdaClient({ region, credentials: getCredentials(idToken) });
+export async function invokeCheckoutEIMs(credentials: AwsCredentialIdentity, payload: object) {
+	const lambdaClient = new LambdaClient({ region, credentials });
 
 	// Prepare the command
 	const command = new InvokeCommand({
-		FunctionName: 'checkout-iems', // Replace with your Lambda function's name
-		Payload: new TextEncoder().encode(JSON.stringify(payload)),
+		'FunctionName': 'checkout-iems', // Replace with your Lambda function's name
+		'Payload': new TextEncoder().encode(JSON.stringify(payload)),
 	});
 
 	// Call the Lambda
@@ -87,12 +87,12 @@ export function getDynamoClientCreds(credentials: AwsCredentialIdentity) {
 // ------ EarbudBorrows ------
 export async function putBorrowRecord(client: DynamoDBClient, item: BorrowRecord) {
 	const command = new PutItemCommand({
-		TableName: 'EarbudBorrows',
-		Item: {
-			name: { S: item.name },
-			checkout_date: { S: item.checkout_date },
-			return_date: { S: item.return_date },
-			earbud_type: { S: item.earbud_type },
+		'TableName': 'EarbudBorrows',
+		'Item': {
+			'name': { S: item.name },
+			'checkout_date': { S: item.checkout_date },
+			'return_date': { S: item.return_date },
+			'earbud_type': { S: item.earbud_type },
 		},
 	});
 
@@ -101,7 +101,7 @@ export async function putBorrowRecord(client: DynamoDBClient, item: BorrowRecord
 
 export async function fetchRecentBorrows(client: DynamoDBClient) {
 	let fiveDaysAgo = new Date();
-	fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+	fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 10);
 
 	const command = new ScanCommand({
 		TableName: 'EarbudBorrows',
@@ -188,4 +188,18 @@ function parseAttributeValue(value: AttributeValue): any {
 	if ('BS' in value) return value.BS;
 	if ('B' in value) return value.B; // Typically Uint8Array
 	return undefined; // fallback
+}
+
+
+
+export function parseAttributes(arr: Array<AttributeType> | undefined): UserAttributes {
+
+	let attributes: UserAttributes = {};
+	if (arr) {
+		arr.forEach((attr: AttributeType) => {
+			if (attr.Name)
+				attributes[attr.Name] = attr.Value;
+		});
+	}
+	return attributes;
 }

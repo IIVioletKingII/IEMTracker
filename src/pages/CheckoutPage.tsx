@@ -1,21 +1,24 @@
-import { useState, memo } from 'react';
+import { useState, memo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from "react-oidc-context";
+import type { AwsCredentialIdentity } from "@aws-sdk/types";
 
 import '../css/CheckoutPage.css'
 import Popup from '../components/Popup.tsx';
 import Navbar from '../components/Navbar.tsx';
+import { fetchAuthSession, type AuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 
 import { invokeCheckoutEIMs } from '../assets/aws.ts';
-
 import TextField from '@mui/material/TextField';
 
 // test link: http://localhost:5173/IEMTracker/checkout?token=1f858dab-853a-41a5-8bf6-b9fa8f073174
 
+const URI = import.meta.env.VITE_PUBLIC_URI;
+
 export default memo(function Page() {
-	const auth = useAuth();
 	const navigate = useNavigate();
 	let error = '';
+
+	const sessionRef = useRef<AuthSession | undefined>(undefined);
 
 	const [inputName, setInputName] = useState('');
 	const [inputType, setInputType] = useState('');
@@ -39,26 +42,26 @@ export default memo(function Page() {
 
 	const closeErrorPopup = () => {
 		setIsErrorPopupOpen(false);
-		// navigate('/', { 'state': { 'fromInsideApp': true } })
 	};
 
-	function checkout() {
-		const idToken = auth.user?.id_token;
-		const userId = auth.user?.profile['cognito:username'];
+	async function checkout() {
+
+		const session = sessionRef.current ?? await fetchAuthSession();
+		sessionRef.current = session;
+
 		const token = params['token'];
 
-		if (!auth.isAuthenticated) {
-			error = 'Invalid authentication.';
-		} else if (auth.isLoading) {
-			error = 'Still loading.';
-		} else if (typeof idToken != 'string') {
-			error = 'Invalid auth id token.';
-		} else if (typeof userId != 'string') {
-			error = 'Invalid user id.';
-		} else if (typeof token != 'string') {
-			error = 'Invalid checkout token.';
+		const profile = session.tokens?.idToken?.payload;
+		if (session.credentials
+			&& profile
+			&& profile.sub
+			&& typeof token == 'string'
+		) {
+			const userAttributes = await fetchUserAttributes();
+			console.log('userAttributes', userAttributes);
+			checkoutIEMs(session.credentials, profile.sub, token);
 		} else {
-			checkoutIEMs(idToken, userId, token);
+			error = 'Invalid credentials';
 		}
 
 		if (error) {
@@ -67,7 +70,7 @@ export default memo(function Page() {
 		}
 	}
 
-	async function checkoutIEMs(idToken: string, userId: string, token: string) {
+	async function checkoutIEMs(credentials: AwsCredentialIdentity, userId: string, token: string) {
 
 		const payload = {
 			userId,
@@ -76,7 +79,7 @@ export default memo(function Page() {
 			earbudType: inputType
 		};
 
-		const response = await invokeCheckoutEIMs(idToken, payload);
+		const response = await invokeCheckoutEIMs(credentials, payload);
 		console.log('response', response);
 		const body = JSON.parse(response.body);
 		console.log('body', body);
@@ -85,15 +88,34 @@ export default memo(function Page() {
 			console.log('Getting new borrows', response);
 			navigate('/home', { 'state': { 'fromInsideApp': true } })
 		} else {
-			// console.log('Invalid response', response);
+			console.log('Invalid response', response);
 			error = body.message ?? 'Error: no error';
 			openErrorPopup();
 		}
 	}
 
+	async function init() {
+
+		const session = await fetchAuthSession();
+		sessionRef.current = session;
+		if (session.credentials) {
+			const userAttributes = await fetchUserAttributes();
+			console.log('userAttributes', userAttributes);
+			setInputName(userAttributes.name ?? '');
+		} else {
+			const redirectURL = window.location.href;
+			console.log('Not signed in', redirectURL);
+			window.location.href = `${URI}/signin?redirect=${redirectURL}`;
+		}
+	}
+
+	useEffect(() => {
+		init();
+	}, []);
+
 	return (
 		<div className="checkout-page">
-			<Navbar />
+			<Navbar><h2>Checkout IEMs</h2></Navbar>
 			<div className="block">
 				<button className='button' onClick={openCheckoutPopup}>Checkout</button>
 			</div>

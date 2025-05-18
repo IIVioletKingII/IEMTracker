@@ -6,3 +6,7 @@
 	font-size: 18px;
 	flex-grow: 1;
 }
+
+canvas {
+	border-radius: 1rem;
+}

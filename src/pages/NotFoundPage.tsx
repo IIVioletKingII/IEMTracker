@@ -12,7 +12,7 @@ export default function NotFoundPage() {
 
 	return (
 		<div className="page" data-name="not-found">
-			<Navbar />
+			<Navbar><h2>Page Not Found</h2></Navbar>
 			<div className="block">
 				<div className="flex margin-vertical align-items-center">
 

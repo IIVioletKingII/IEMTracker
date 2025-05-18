@@ -1,19 +1,20 @@
 import { useState, useEffect, memo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from "react-oidc-context";
+// import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 
 import '../css/AdminPage.css'
 import HistoryRecord from '../components/BorrowRecord.tsx';
 import Popup from '../components/Popup.tsx';
 
-import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBItem, putToken } from '../assets/aws.ts';
+import { putBorrowRecord, fetchRecentBorrows, flattenDBItem, putToken, getDynamoClientCreds } from '../assets/aws.ts';
+import { fetchAuthSession, type AuthSession } from 'aws-amplify/auth';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import TextField from '@mui/material/TextField';
+import Navbar from '../components/Navbar.tsx';
 
 import { type BorrowRecord, type Token } from '../assets/types.ts';
 
@@ -25,9 +26,10 @@ const URI = import.meta.env.VITE_PUBLIC_URI;
 
 export default memo(function Page() {
 	const canvasRef = useRef(null);
+	const sessionRef = useRef<AuthSession | undefined>(undefined);
+
 	const [qrCodeUpdated, setQRCodeUpdated] = useState(new Date(0));
-	const auth = useAuth();
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const [items, setItems] = useState<BorrowRecord[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [inputName, setInputName] = useState('');
@@ -48,10 +50,10 @@ export default memo(function Page() {
 	async function checkoutBud() {
 		const newItem = getCheckoutInfo();
 		setItems((prevItems) => [newItem, ...prevItems]);
+		const session = sessionRef.current;
 
-		if (auth.isAuthenticated && auth.user?.id_token) {
-			const idToken = auth.user.id_token;
-			const dynamoClient = getDynamoClient(idToken);
+		if (session?.credentials) {
+			const dynamoClient = getDynamoClientCreds(session.credentials);
 
 			try {
 				await putBorrowRecord(dynamoClient, newItem);
@@ -63,38 +65,44 @@ export default memo(function Page() {
 	}
 
 	async function createQRCode() {
-		console.log('createQRCode');
 
 		setQRCodeUpdated(new Date());
-		const username = auth.user?.profile['cognito:username'];
-		const idToken = auth.user?.id_token;
-		const email = auth.user?.profile.email;
-		// console.log('info', username, idToken, email);
+		const session = sessionRef.current;
+		const profile = session?.tokens?.idToken?.payload;
+		console.log('createQRCode', session, session?.tokens, session?.tokens?.idToken);
 
-		if (auth.isAuthenticated && idToken && email && username && typeof username == 'string') {
-			const dynamoClient = getDynamoClient(idToken);
+		if (session && profile) {
 
-			const newItem: Token = {
-				token: crypto.randomUUID(),
-				date_created: new Date().toJSON(),
-				created_by_id: username,
-				created_by_name: email
-			};
-			console.log('newItem', newItem);
+			const username = profile['cognito:username'];
+			const email = profile.email;
 
-			try {
-				await putToken(dynamoClient, newItem);
-				console.log('Item added successfully');
+			if (session.credentials && typeof username == 'string' && typeof email == 'string') {
+				const dynamoClient = getDynamoClientCreds(session.credentials);
 
-				if (canvasRef.current) {
-					const qrText = `${URI}/checkout?token=${newItem.token}`;
-					QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'H' }, (error: any) => {
-						if (error) console.error(error);
-					});
+				const newItem: Token = {
+					token: crypto.randomUUID(),
+					date_created: new Date().toJSON(),
+					created_by_id: username,
+					created_by_name: email
+				};
+				console.log('newItem', newItem);
+
+				try {
+					await putToken(dynamoClient, newItem);
+					console.log('Item added successfully');
+
+					if (canvasRef.current) {
+						const qrText = `${URI}/checkout?token=${newItem.token}`;
+						console.log('url', qrText);
+
+						QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'H' }, (error: any) => {
+							if (error) console.error(error);
+						});
+					}
+
+				} catch (error) {
+					console.error('Failed to add item to DynamoDB:', error);
 				}
-
-			} catch (error) {
-				console.error('Failed to add item to DynamoDB:', error);
 			}
 		}
 	}
@@ -123,27 +131,19 @@ export default memo(function Page() {
 		setIsQRPopupOpen(false);
 	};
 
-	function goHome() {
-		navigate('/', { 'state': { 'fromInsideApp': true } });
-	}
+	async function init() {
 
-	useEffect(() => {
-		if (!auth.isAuthenticated && !auth.isLoading) {
-			console.log('not authenticated', auth);
-			navigate('/', { 'state': { 'fromInsideApp': true } });
-			return;
-		}
+		const fetchedSession = await fetchAuthSession();
+		sessionRef.current = fetchedSession;
 
-		console.log('auth admin', auth);
-
-		// Proceed only if authenticated
-		if (auth.isAuthenticated && auth.user?.id_token) {
-			const idToken = auth.user.id_token;
-			const dynamoClient = getDynamoClient(idToken);
+		if (fetchedSession.credentials) {
+			const dynamoClient = getDynamoClientCreds(fetchedSession.credentials);
 
 			fetchRecentBorrows(dynamoClient)
 				.then((response) => {
 					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
+					console.log('itmes', response, condensed);
+
 					setItems(condensed);
 					setIsLoading(false);
 				})
@@ -152,18 +152,15 @@ export default memo(function Page() {
 					setIsLoading(false);
 				});
 		}
-	}, [auth.isAuthenticated, auth.isLoading, navigate]); // Only run if authentication state changes
+	}
 
-	let message = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
+	useEffect(() => {
+		init();
+	}, []);
 
 	return (
 		<div className="home-page">
-			<div className="header flex gap align-items-center">
-				<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" className="home-hero" />
-				<button onClick={goHome}>
-					<span className='material-icons'>home</span>
-				</button>
-			</div>
+			<Navbar><h2>Admin</h2></Navbar>
 			<div className="block">
 				<div className="flex margin-vertical align-items-center gap justify-content-space-between">
 
@@ -177,9 +174,9 @@ export default memo(function Page() {
 				</div>
 
 				{isLoading ? (
-					<span>{message}</span>
-				) : items.map((item, index) => (
-					<HistoryRecord key={index} record={item} admin={true} />
+					<span>Loading...</span>
+				) : items.map((item) => (
+					<HistoryRecord key={item.name} record={item} admin={true} />
 				))}
 			</div>
 
@@ -195,7 +192,7 @@ export default memo(function Page() {
 
 			<Popup isOpen={isPopupOpen} onClose={closePopup}>
 				<h2>Checkout IEMs</h2>
-				<div className="flex col gap" style={({ 'gap': '1rem' })}>
+				<div className="flex col gap" style={({ 'gap': '1.5rem' })}>
 					<TextField label="Name"
 						variant="outlined"
 						value={inputName}

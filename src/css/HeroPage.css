@@ -1,6 +1,6 @@
 .hero-page-hero {
 	--margin: 5rem;
-	margin: var(--margin);
+	margin: var(--margin) 0;
 	min-width: 300px;
 	width: calc(60% - var(--margin));
 

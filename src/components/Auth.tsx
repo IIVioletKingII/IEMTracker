@@ -1,14 +1,11 @@
 // App.js
-
-import { useAuth } from "react-oidc-context";
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
-import { getUserAttributes } from '../assets/aws';
 import { getCurrentUser, fetchAuthSession, signOut } from '@aws-amplify/auth';
 
 import '../css/Auth.css';
 
-const URI = import.meta.env.VITE_PUBLIC_URI;
+// const URI = import.meta.env.VITE_PUBLIC_URI;
 
 let signedIn = false;
 let isAdmin = false;
@@ -16,34 +13,32 @@ let isAdmin = false;
 export default memo(function Auth() {
 
 	const [loading, setLoading] = useState(true);
-	// const [isAdmin, setIsAdmin] = useState(true);
 
 	const navigate = useNavigate();
-	const location = useLocation();
-	const fromInsideApp: boolean = location.state?.fromInsideApp;
+	// const location = useLocation();
+	// const fromInsideApp: boolean = location.state?.fromInsideApp;
 
 	async function init() {
 
 		try {
 			const user = await getCurrentUser();
-			console.log('User is logged in:', user);
+			console.log('> User is logged in:', user);
 		} catch (error) {
-			console.log('No user is logged in.', error);
+			console.log('> No user is logged in.', error);
 		}
 
 		const session = await fetchAuthSession();
 		if (session.tokens)
 			signedIn = true;
 
-		const idToken = session.tokens?.idToken?.payload;
-		if (typeof idToken == 'object'
-			&& Array.isArray(idToken['cognito:groups'])
+		const profile = session.tokens?.idToken?.payload;
+		if (typeof profile == 'object'
+			&& Array.isArray(profile['cognito:groups'])
 		) {
-			isAdmin = idToken['cognito:groups'].includes('Admins');
+			isAdmin = profile['cognito:groups'].includes('Admins');
 		}
 
 		console.log('session:', session);
-
 
 		setLoading(false);
 	}
@@ -62,7 +57,6 @@ export default memo(function Auth() {
 	if (loading) {
 		return <div>Loading...</div>;
 	}
-
 
 	if (signedIn) {
 		return (

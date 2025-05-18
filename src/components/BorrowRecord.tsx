@@ -9,8 +9,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import Record from './Record.tsx';
+// import 
 
-export default function HistoryRecord({ record, admin }: { record: BorrowRecord, admin: boolean }) {
+const dateOptions: Intl.DateTimeFormatOptions = { year: '2-digit', month: 'numeric', day: 'numeric' };
+const timeOptions: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+
+export default function HistoryRecord({ record, admin }: { readonly record: BorrowRecord, readonly admin: boolean }) {
 
 	/* 
 name -> string;
@@ -27,13 +31,14 @@ return_date -> string;
 
 	const [inputDateTime, setInputDateTime] = useState<Date | null>(new Date(record.checkout_date));
 	const [returned, setReturned] = useState(record.return_date ? true : false);
+	// const [returnBy, setReturnBy] = useState(new Date(record.return_by));
 
 
-	const returnBy = new Date(record.return_by);
-	const late = !returned && new Date() > returnBy;
+	// console.log('record', record);
 
-	// console.log('returned', returned);
-	// console.log('late', late, returnBy);
+	const returnDate = record.return_date ? new Date(record.return_date) : undefined;
+	const returnBy = record.return_by ? new Date(record.return_by) : undefined;
+	const late = (returnBy) && (!returned && new Date() > returnBy);
 
 	function openPopupA() {
 		setIsPopupAOpen(true);
@@ -78,6 +83,25 @@ return_date -> string;
 		setReturned(true);
 	}
 
+	function sameDay(d1: Date, d2: Date) {
+		return d1?.getFullYear() === d2.getFullYear() &&
+			d1?.getMonth() === d2.getMonth() &&
+			d1?.getDate() === d2.getDate();
+	}
+
+	function getCurrentTime(returnDate: Date) {
+		const time = returnDate.toLocaleTimeString(undefined, timeOptions).toLowerCase();
+		if (sameDay(returnDate, new Date()))
+			return time;
+		return returnDate.toLocaleDateString(undefined, dateOptions) + ', ' + time;
+	}
+
+	let returnString = 'No return date set';
+	if (returnDate)
+		returnString = `Returned ${getCurrentTime(returnDate)}`;
+	else if (returnBy)
+		returnString = `Return by ${getCurrentTime(returnBy)}`;
+
 	return (
 		<Record icon="headphones" classes={late ? 'late' : ''}>
 			<span className="name">{record.name}</span>
@@ -88,7 +112,8 @@ return_date -> string;
 			<button onClick={openPopupB}>
 				<span className="material-icons">event_available</span>
 			</button>
-			<Checkbox checked={returned} onChange={handleChange} />
+			<span>{returnString}</span>
+			{admin && <Checkbox checked={returned} onChange={handleChange} />}
 
 			<Popup isOpen={isPopupAOpen} onClose={closePopupA}>
 				<h2>Checkout Date</h2>
