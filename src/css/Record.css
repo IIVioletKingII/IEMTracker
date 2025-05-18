@@ -15,12 +15,6 @@
 
 .record-container:hover {
 	transition: 150ms;
-	/* transform: scaleX(1.05) scaleY(1.5); */
-	/* transform: scale(1.005); */
-}
-
-.name {
-	flex-grow: 1;
 }
 
 button {

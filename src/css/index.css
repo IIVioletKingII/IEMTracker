@@ -136,3 +136,7 @@ h1 {
 .button:active:not(:disabled) {
 	outline: 4px auto -webkit-focus-ring-color;
 }
+
+button {
+	justify-content: center;
+}

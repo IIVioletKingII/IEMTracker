@@ -1,13 +1,24 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-import { CognitoIdentityProviderClient, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 import { type BorrowRecord, type Token } from './types';
 
 import { region, userPoolId, identityPoolId } from './security';
-import { id } from 'date-fns/locale';
+import type { AwsCredentialIdentity } from "@aws-sdk/types";
+
+export async function getUsers(credentials: AwsCredentialIdentity) {
+	const client = new CognitoIdentityProviderClient({ region, credentials });
+
+	const command = new ListUsersCommand({
+		UserPoolId: userPoolId,
+		Limit: 60 // Optional: max is 60
+	});
+
+	return client.send(command);
+}
 
 export async function getUserAttributes(accessToken: string) {
 	const client = new CognitoIdentityProviderClient({ region });
@@ -67,6 +78,10 @@ function getCredentials(idToken: string) {
 
 export function getDynamoClient(idToken: string) {
 	return new DynamoDBClient({ region, credentials: getCredentials(idToken) });
+}
+
+export function getDynamoClientCreds(credentials: AwsCredentialIdentity) {
+	return new DynamoDBClient({ region, credentials });
 }
 
 // ------ EarbudBorrows ------

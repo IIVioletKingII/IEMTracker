@@ -4,7 +4,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useMemo } from 'react';
 
 import Auth from "./components/Auth.tsx";
-import AuthPage from './pages/HeroPage.tsx'
+import HeroPage from './pages/HeroPage.tsx'
 import HomePage from './pages/HomePage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
@@ -12,6 +12,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage.tsx';
 import SignoutPage from './pages/SignoutPage.tsx';
 import CheckoutPage from './pages/CheckoutPage.tsx';
+import SignInPage from './pages/SignInPage.tsx';
+import UsersPage from './pages/UsersPage.tsx';
 
 export default function Router() {
 
@@ -31,11 +33,12 @@ export default function Router() {
 					<Route
 						path='/'
 						element={
-							<AuthPage>
+							<HeroPage>
 								<Auth />
-							</AuthPage>
+							</HeroPage>
 						}
 					/>
+					<Route path='/signin' element={<SignInPage />} />
 					<Route
 						path='/home'
 						element={
@@ -57,6 +60,14 @@ export default function Router() {
 						element={
 							<ProtectedRoute>
 								<AdminPage />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path='/users'
+						element={
+							<ProtectedRoute>
+								<UsersPage />
 							</ProtectedRoute>
 						}
 					/>

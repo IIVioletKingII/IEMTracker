@@ -4,7 +4,7 @@ import { useAuth } from "react-oidc-context";
 import QRCode from 'qrcode';
 
 import '../css/AdminPage.css'
-import Record from '../components/Record.tsx';
+import HistoryRecord from '../components/BorrowRecord.tsx';
 import Popup from '../components/Popup.tsx';
 
 import { getDynamoClient, putBorrowRecord, fetchRecentBorrows, flattenDBItem, putToken } from '../assets/aws.ts';
@@ -39,7 +39,9 @@ export default memo(function Page() {
 			name: inputName,
 			checkout_date: inputDateTime ? inputDateTime.toJSON() : new Date().toJSON(),
 			return_date: '',
-			earbud_type: inputType
+			earbud_type: inputType,
+			checkout_user_id: '',
+			return_by: new Date().toJSON()
 		};
 	}
 
@@ -177,7 +179,7 @@ export default memo(function Page() {
 				{isLoading ? (
 					<span>{message}</span>
 				) : items.map((item, index) => (
-					<Record key={index} record={item} admin={true} />
+					<HistoryRecord key={index} record={item} admin={true} />
 				))}
 			</div>
 

@@ -1,15 +1,17 @@
 import { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "react-oidc-context";
+import { fetchAuthSession } from 'aws-amplify/auth';
 
-import { getDynamoClient, fetchUserBorrows, flattenDBItem } from '../assets/aws.ts';
+import { getDynamoClientCreds, fetchUserBorrows, flattenDBItem } from '../assets/aws.ts';
+import type { AwsCredentialIdentity } from "@aws-sdk/types";
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import '../css/HomePage.css'
-import Record from '../components/Record.tsx';
+import HistoryRecord from '../components/BorrowRecord.tsx';
 import Popup from '../components/Popup.tsx';
 import Navbar from '../components/Navbar.tsx';
 import Accordion from '../components/Accordion.tsx';
@@ -23,7 +25,7 @@ function compareDateStrings(a: BorrowRecord, b: BorrowRecord): number {
 }
 
 export default memo(function Page() {
-	const auth = useAuth();
+
 	const navigate = useNavigate();
 	const [items, setItems] = useState<BorrowRecord[]>([]);
 	const [returnedItems, setReturnedItems] = useState<BorrowRecord[]>([]);
@@ -43,9 +45,9 @@ export default memo(function Page() {
 		setIsPopupOpen(false);
 	};
 
-	function fetchMyBorrows(idToken: string, user_id: string) {
+	function fetchMyBorrows(credentials: AwsCredentialIdentity, user_id: string) {
 
-		const dynamoClient = getDynamoClient(idToken);
+		const dynamoClient = getDynamoClientCreds(credentials);
 
 		fetchUserBorrows(dynamoClient, user_id)
 			.then((response) => {
@@ -75,28 +77,29 @@ export default memo(function Page() {
 			});
 	}
 
+	async function init() {
+
+		const session = await fetchAuthSession();
+		const idToken = session.tokens?.idToken?.payload;
+		if (session.credentials
+			&& typeof idToken == 'object'
+			// && Array.isArray(idToken['cognito:groups'])
+			&& typeof idToken.sub == 'string'
+		) {
+			fetchMyBorrows(session.credentials, idToken.sub);
+		}
+	}
+
 	useEffect(() => {
-		if (!auth.isAuthenticated && !auth.isLoading) {
-			console.log('not authenticated', auth);
-			navigate('/', { 'state': { 'fromInsideApp': true } });
-			return; // Proceed only if authenticated
-		}
-
-		const user_id = auth.user?.profile['cognito:username'];
-		if (auth.isAuthenticated && auth.user?.id_token && typeof user_id == 'string') {
-			const idToken = auth.user.id_token;
-
-			fetchMyBorrows(idToken, user_id)
-		}
-	}, [auth.isAuthenticated, auth.isLoading, navigate]); // Only run if authentication state changes
-
+		init();
+	}, []);
 
 	const infoMessage = items.length ? 'IEMs not returned' : 'No IEM checkout history.'
-	const loadingMessage = !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' : 'Loading...';
+	const loadingMessage = /* !auth.isAuthenticated && !auth.isLoading ? 'Not authenticated, redirecting...' :  */'Loading...';
 
 	return (
 		<div className="home-page">
-			<Navbar />
+			<Navbar>Home</Navbar>
 			<div className="block">
 				<div className="flex margin-vertical align-items-center justify-content-space-between">
 					<div className="title">{infoMessage}</div>
@@ -108,11 +111,11 @@ export default memo(function Page() {
 				) : (
 					<div className="container">
 						{items.map((item, index) => (
-							<Record key={index} record={item} admin={false} />
+							<HistoryRecord key={index} record={item} admin={false} />
 						))}
 						<Accordion title='Returned IEMs'>
 							{returnedItems.map((item, index) => (
-								<Record key={index} record={item} admin={false} />
+								<HistoryRecord key={index} record={item} admin={false} />
 							))}
 						</Accordion>
 					</div>

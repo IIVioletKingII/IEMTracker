@@ -6,6 +6,7 @@ export const region = 'us-east-2';
 // export const userPoolId = 'us-east-2_UbVB9dHVM';
 // export const userPoolId = 'us-east-2_VcAaN5TPB';
 export const userPoolId = 'us-east-2_bzEvjHlih';
+export const userPoolWebClientId = '7or71c2o1m4ji460vpkf52ae15';
 export const identityPoolId = 'us-east-2:fe8b1af6-470c-458e-815a-79a6549d96e0';
 
 
@@ -29,7 +30,7 @@ export const identityPoolId = 'us-east-2:fe8b1af6-470c-458e-815a-79a6549d96e0';
 
 export const cognitoAuthConfig = {
 	authority: `https://cognito-idp.us-east-2.amazonaws.com/${userPoolId}`,
-	client_id: "7or71c2o1m4ji460vpkf52ae15",
+	client_id: userPoolWebClientId,
 	redirect_uri: `${URI}/home`,
 	response_type: "code",
 	scope: "phone openid email",

@@ -1,19 +1,22 @@
 import { useNavigate } from 'react-router-dom';
 import '../css/Navbar.css';
+import type { ReactNode } from 'react';
 
-export default function Navbar() {
+export default function Navbar({ children }: { readonly children: ReactNode }) {
 	const navigate = useNavigate();
 
 	function goHome() {
 		navigate('/', { 'state': { 'fromInsideApp': true } });
 	}
 
-
 	return (
-		<div className="header flex gap align-items-center" >
-			<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" className="home-hero" />
+		<div className="header flex align-items-center" >
+			<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" />
+			<div className='center'>
+				{children}
+			</div>
 			<button onClick={goHome}>
-				<span className='material-icons' > home </span>
+				<span className='material-icons'>home</span>
 			</button>
 		</div>
 	)
