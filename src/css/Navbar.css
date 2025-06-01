@@ -15,9 +15,12 @@
 }
 
 
-.header>:first-child,
+.header>:first-child {
+	margin: 0 2rem;
+}
+
 .header>:last-child {
-	padding: 0 2rem;
+	margin: 0 1rem;
 }
 
 

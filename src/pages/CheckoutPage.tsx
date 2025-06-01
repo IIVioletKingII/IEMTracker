@@ -16,10 +16,10 @@ const URI = import.meta.env.VITE_PUBLIC_URI;
 
 export default memo(function Page() {
 	const navigate = useNavigate();
-	let error = '';
 
 	const sessionRef = useRef<AuthSession | undefined>(undefined);
 
+	const [error, setError] = useState('');
 	const [inputName, setInputName] = useState('');
 	const [inputType, setInputType] = useState('');
 
@@ -61,7 +61,7 @@ export default memo(function Page() {
 			console.log('userAttributes', userAttributes);
 			checkoutIEMs(session.credentials, profile.sub, token);
 		} else {
-			error = 'Invalid credentials';
+			setError('Invalid credentials');
 		}
 
 		if (error) {
@@ -89,7 +89,8 @@ export default memo(function Page() {
 			navigate('/home', { 'state': { 'fromInsideApp': true } })
 		} else {
 			console.log('Invalid response', response);
-			error = body.message ?? 'Error: no error';
+			setError(body.message ?? 'Error: no error');
+
 			openErrorPopup();
 		}
 	}
@@ -100,8 +101,8 @@ export default memo(function Page() {
 		sessionRef.current = session;
 		if (session.credentials) {
 			const userAttributes = await fetchUserAttributes();
-			console.log('userAttributes', userAttributes);
-			setInputName(userAttributes.name ?? '');
+			// console.log('cjheckout userAttributes', userAttributes);
+			setInputName(userAttributes.nickname ?? userAttributes.name ?? '');
 		} else {
 			const redirectURL = window.location.href;
 			console.log('Not signed in', redirectURL);
@@ -128,7 +129,8 @@ export default memo(function Page() {
 						onChange={(e) => setInputName(e.target.value)}
 						fullWidth
 					></TextField>
-					<TextField label="Type"
+					<span>Enter the type of IEMs (215 or 425) or any markings like their label or number.</span>
+					<TextField label="Earbud Info"
 						variant="outlined"
 						value={inputType}
 						onChange={(e) => setInputType(e.target.value)}

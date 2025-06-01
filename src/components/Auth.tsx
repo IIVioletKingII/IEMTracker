@@ -73,6 +73,7 @@ export default memo(function Auth() {
 	return (
 		<div className="flex row gap justify-content-center">
 			<Link className="button" to="/signin" state={{ 'fromInsideApp': true }}>Sign in</Link>
+			<Link className="button" to="/signup" state={{ 'fromInsideApp': true }}>Create Account</Link>
 			{/* <button className="button" onClick={() => signOutRedirect()}>Sign out</button> */}
 		</div>
 	);

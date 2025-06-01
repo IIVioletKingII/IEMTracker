@@ -10,9 +10,10 @@ import AdminPage from './pages/AdminPage.tsx';
 import NotFoundPage from './pages/NotFoundPage.tsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage.tsx';
-import SignoutPage from './pages/SignoutPage.tsx';
 import CheckoutPage from './pages/CheckoutPage.tsx';
 import SignInPage from './pages/SignInPage.tsx';
+import SignUpPage from './pages/SignUpPage.tsx';
+import SignOutPage from './pages/SignoutPage.tsx';
 import UsersPage from './pages/UsersPage.tsx';
 
 export default function Router() {
@@ -38,7 +39,6 @@ export default function Router() {
 							</HeroPage>
 						}
 					/>
-					<Route path='/signin' element={<SignInPage />} />
 					<Route
 						path='/home'
 						element={
@@ -79,7 +79,9 @@ export default function Router() {
 							</ProtectedRoute>
 						}
 					/>
-					<Route path='/signout' element={<SignoutPage />} />
+					<Route path='/signin' element={<SignInPage />} />
+					<Route path='/signup' element={<SignUpPage />} />
+					<Route path='/signout' element={<SignOutPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</HashRouter>

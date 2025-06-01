@@ -146,3 +146,56 @@ h1 {
 button {
 	justify-content: center;
 }
+
+button>span.material-icons {
+	padding: 0.5rem;
+}
+
+button:has(span.material-icons):active:not(:disabled) {
+	/* background-color: #b00020; */
+}
+
+.shadow-click {
+	position: relative;
+	z-index: 1;
+}
+
+button.shadow-click::after {
+	--size: 2px;
+}
+
+.popup-close span.shadow-click::after {
+	--size: 6px;
+}
+
+.shadow-click::after {
+	content: '';
+	position: absolute;
+	--size: 0px;
+	top: calc(-1 * var(--size));
+	left: calc(-1 * var(--size));
+	width: calc(100% + 2 * var(--size));
+	height: calc(100% + 2 * var(--size));
+	border-radius: 2rem;
+	background-color: rgba(0, 0, 0, 0.25);
+	opacity: 0;
+	transition: opacity 150ms;
+	pointer-events: none;
+	z-index: -1;
+}
+
+.shadow-click:hover:not(:disabled)::after {
+	opacity: 1;
+}
+
+.shadow-click:active:not(:disabled)::after {
+	opacity: 0.7;
+}
+
+.success {
+	--color: lawngreen;
+}
+
+.failure {
+	--color: orangered;
+}

@@ -15,7 +15,7 @@ export default function Navbar({ children }: { children: ReactNode }) {
 			<div className='center'>
 				{children}
 			</div>
-			<button onClick={goHome}>
+			<button className='shadow-click' onClick={goHome}>
 				<span className='material-icons'>home</span>
 			</button>
 		</div>
