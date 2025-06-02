@@ -1,11 +1,9 @@
 // App.js
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
-import { getCurrentUser, fetchAuthSession, signOut } from '@aws-amplify/auth';
+import { fetchAuthSession, signOut } from '@aws-amplify/auth';
 
 import '../css/Auth.css';
-
-// const URI = import.meta.env.VITE_PUBLIC_URI;
 
 let signedIn = false;
 let isAdmin = false;
@@ -15,17 +13,10 @@ export default memo(function Auth() {
 	const [loading, setLoading] = useState(true);
 
 	const navigate = useNavigate();
-	// const location = useLocation();
-	// const fromInsideApp: boolean = location.state?.fromInsideApp;
+	const location = useLocation();
+	const redirectURL: string = location.state?.redirectURL ?? '';
 
 	async function init() {
-
-		try {
-			const user = await getCurrentUser();
-			console.log('> User is logged in:', user);
-		} catch (error) {
-			console.log('> No user is logged in.', error);
-		}
 
 		const session = await fetchAuthSession();
 		if (session.tokens)
@@ -51,6 +42,7 @@ export default memo(function Auth() {
 
 
 	useEffect(() => {
+		console.log('home (auth) redirect', redirectURL);
 		init();
 	}, []);
 
@@ -61,10 +53,10 @@ export default memo(function Auth() {
 	if (signedIn) {
 		return (
 			<div className="flex row gap justify-content-center">
-				<Link className="button" to="/home" state={{ 'fromInsideApp': true }}>Home</Link>
-				<Link className="button" to="/profile" state={{ 'fromInsideApp': true }}>Profile</Link>
-				{isAdmin && (<Link className="button" to="/admin" state={{ 'fromInsideApp': true }}>Admin</Link>)}
-				{isAdmin && (<Link className="button" to="/users" state={{ 'fromInsideApp': true }}>Users</Link>)}
+				<Link className="button" to="/home">Home</Link>
+				<Link className="button" to="/profile">Profile</Link>
+				{isAdmin && (<Link className="button" to="/admin">Admin</Link>)}
+				{isAdmin && (<Link className="button" to="/users">Users</Link>)}
 				<button className="button" onClick={() => signOutRedirect()}>Sign out</button>
 			</div>
 		);
@@ -72,9 +64,8 @@ export default memo(function Auth() {
 
 	return (
 		<div className="flex row gap justify-content-center">
-			<Link className="button" to="/signin" state={{ 'fromInsideApp': true }}>Sign in</Link>
-			<Link className="button" to="/signup" state={{ 'fromInsideApp': true }}>Create Account</Link>
-			{/* <button className="button" onClick={() => signOutRedirect()}>Sign out</button> */}
+			<Link className="button" to="/signin" state={{ redirectURL }}>Sign in</Link>
+			<Link className="button" to="/signup" state={{ redirectURL }}>Create Account</Link>
 		</div>
 	);
 });

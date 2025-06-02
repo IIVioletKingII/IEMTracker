@@ -13,7 +13,7 @@ import ProfilePage from './pages/ProfilePage.tsx';
 import CheckoutPage from './pages/CheckoutPage.tsx';
 import SignInPage from './pages/SignInPage.tsx';
 import SignUpPage from './pages/SignUpPage.tsx';
-import SignOutPage from './pages/SignoutPage.tsx';
+import SignOutPage from './pages/SignOutPage.tsx';
 import UsersPage from './pages/UsersPage.tsx';
 
 export default function Router() {

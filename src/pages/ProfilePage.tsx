@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar"
 import { fetchAuthSession } from "@aws-amplify/core";
-import { getCurrentUser, fetchUserAttributes, type UserAttributeKey, updateUserAttributes } from "@aws-amplify/auth";
+import { fetchUserAttributes, type UserAttributeKey, updateUserAttributes } from "@aws-amplify/auth";
 import { useEffect, useState } from "react";
 import TextField from '@mui/material/TextField';
 import Popup from "../components/Popup";

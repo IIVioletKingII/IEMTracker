@@ -199,3 +199,11 @@ button.shadow-click::after {
 .failure {
 	--color: orangered;
 }
+
+.color {
+	color: var(--color);
+}
+
+.bg-color {
+	background-color: var(--color);
+}

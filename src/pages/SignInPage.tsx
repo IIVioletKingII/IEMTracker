@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { signIn, signOut, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
-import { Link, useNavigate } from 'react-router-dom';
+import { signIn, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import IconButton from '@mui/material/IconButton';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -11,37 +11,25 @@ import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Popup from '../components/Popup';
-
-type urlParams = {
-	token?: string;
-	[key: string]: string | undefined;
-}
 
 const SignIn: React.FC = () => {
 
 	const navigate = useNavigate();
+
+	const location = useLocation();
+	const redirectURL: string = location.state?.redirectURL ?? '';
+
 	const [pageLoading, setPageLoading] = useState(true);
 
 	const [email, setEmail] = useState('');
 	const [signedIn, setSignedIn] = useState(false);
 
 	const [password, setPassword] = useState('');
-	const [password2, setPassword2] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
-	const [showPassword2, setShowPassword2] = useState(false);
 
 	const [error, setError] = useState<string | null>(null);
 	const [loadingIn, setLoadingIn] = useState(false);
 	const [loadingOut, setLoadingOut] = useState(false);
-	const [loadingAccount, setLoadingAccount] = useState(false);
-
-	const [isPopupTFAOpen, setPopupTFAOpen] = useState(false);
-
-
-	// const paramsRef = useRef<urlParams>({});
-
-
 
 	const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
 		event.preventDefault();
@@ -56,15 +44,15 @@ const SignIn: React.FC = () => {
 		setError(null);
 		try {
 			const user = await signIn({ username: email, password });
-			console.log('User successfully signed in:', user);
 			// Redirect or update UI here after successful sign-in
-			const params: urlParams = Object.fromEntries(new URLSearchParams(window.location.search));
-			console.log('sign in params', params);
-
-			if (params.redirect)
-				window.location.href = params.redirect;
-			else
-				navigate('/');
+			if (user.isSignedIn) {
+				if (redirectURL)
+					window.location.href = redirectURL;
+				else
+					navigate('/');
+			} else {
+				navigate('/signup', { 'state': { user, email, password, redirectURL } });
+			}
 		} catch (err: any) {
 			setError(err.message ?? 'Error signing in');
 		} finally {
@@ -82,8 +70,8 @@ const SignIn: React.FC = () => {
 		setSignedIn(false);
 	}
 
-	function closePopupTFA() {
-		setPopupTFAOpen(false);
+	function homeLink() {
+		navigate('/', { 'state': { redirectURL } });
 	}
 
 	async function init() {
@@ -93,12 +81,13 @@ const SignIn: React.FC = () => {
 	}
 
 	useEffect(() => {
+		console.log('sign in redirect', redirectURL);
 		init();
 	}, [signedIn]);
 
 	return (
 		<div className='signin-page'>
-			<Navbar><h2>Sign In</h2></Navbar>
+			<Navbar homeLink={homeLink}><h2>Sign In</h2></Navbar>
 
 			<div className="block">
 				<div className="flex col gap justify-content-center">
@@ -135,7 +124,7 @@ const SignIn: React.FC = () => {
 						/>
 					</FormControl>
 
-					{error && <span style={{ color: 'red' }}>{error}</span>}
+					{error && <span className='color failure'>{error}</span>}
 
 
 					{!pageLoading && <div className="flex row gap">
@@ -149,10 +138,6 @@ const SignIn: React.FC = () => {
 					</div>}
 				</div>
 			</div>
-
-			<Popup isOpen={isPopupTFAOpen} onClose={closePopupTFA}>
-				<h2></h2>
-			</Popup>
 		</div>
 	);
 };

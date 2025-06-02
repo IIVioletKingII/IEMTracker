@@ -12,12 +12,12 @@ import TextField from '@mui/material/TextField';
 
 // test link: http://localhost:5173/IEMTracker/checkout?token=1f858dab-853a-41a5-8bf6-b9fa8f073174
 
-const URI = import.meta.env.VITE_PUBLIC_URI;
-
 export default memo(function Page() {
 	const navigate = useNavigate();
 
 	const sessionRef = useRef<AuthSession | undefined>(undefined);
+
+	const [redirectURL, setRedirectURL] = useState('/');
 
 	const [error, setError] = useState('');
 	const [inputName, setInputName] = useState('');
@@ -95,18 +95,24 @@ export default memo(function Page() {
 		}
 	}
 
+	function homeLink() {
+		navigate('/', { 'state': { redirectURL } });
+	}
+
 	async function init() {
+
+		console.log('init checkout page');
+
 
 		const session = await fetchAuthSession();
 		sessionRef.current = session;
 		if (session.credentials) {
 			const userAttributes = await fetchUserAttributes();
-			// console.log('cjheckout userAttributes', userAttributes);
 			setInputName(userAttributes.nickname ?? userAttributes.name ?? '');
 		} else {
-			const redirectURL = window.location.href;
-			console.log('Not signed in', redirectURL);
-			window.location.href = `${URI}/signin?redirect=${redirectURL}`;
+			setRedirectURL(window.location.href);
+			navigate('/', { 'state': { redirectURL } })
+			// console.log('Not signed in', redirectURL);
 		}
 	}
 
@@ -116,7 +122,7 @@ export default memo(function Page() {
 
 	return (
 		<div className="checkout-page">
-			<Navbar><h2>Checkout IEMs</h2></Navbar>
+			<Navbar homeLink={homeLink}><h2>Checkout IEMs</h2></Navbar>
 			<div className="block">
 				<button className='button' onClick={openCheckoutPopup}>Checkout</button>
 			</div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { signIn, signUp, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
-import { Link, useNavigate } from 'react-router-dom';
+import { signIn, signUp, fetchAuthSession, type SignInOutput, confirmSignUp } from 'aws-amplify/auth';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import IconButton from '@mui/material/IconButton';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -13,18 +13,20 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Popup from '../components/Popup';
 
-type urlParams = {
-	token?: string;
-	[key: string]: string | undefined;
-}
-
 const SignUp: React.FC = () => {
+
+	const location = useLocation();
+	const redirectURL: string = location.state?.redirectURL ?? '';
+	const user: SignInOutput = location.state?.user;
 
 	const navigate = useNavigate();
 	const [pageLoading, setPageLoading] = useState(true);
 
+	const [signUpMessage, setSignUpMessage] = useState('You should have been sent a code. Enter it to confirm your account.');
+
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
+	const [verificationCode, setVerificationCode] = useState('');
 
 	const [password, setPassword] = useState('');
 	const [password2, setPassword2] = useState('');
@@ -34,10 +36,7 @@ const SignUp: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [loadingAccount, setLoadingAccount] = useState(false);
 
-	const [isPopupTFAOpen, setPopupTFAOpen] = useState(false);
-
-
-	// const paramsRef = useRef<urlParams>({});
+	const [isPopupTFAOpen, setIsPopupTFAOpen] = useState(false);
 
 	const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
 		event.preventDefault();
@@ -66,11 +65,39 @@ const SignUp: React.FC = () => {
 
 	}
 
+	async function confirmAccount() {
+		const { nextStep } = await confirmSignUp({
+			username: email,
+			confirmationCode: verificationCode,
+		});
+
+		if (nextStep.signUpStep === 'DONE') {
+			console.log('SignUp Complete!');
+			if (password) {
+				const res = await signIn({ username: email, password });
+				console.log('sign in', res);
+			}
+			signUserIn();
+		}
+	}
+
+	async function signUserIn() {
+
+		// Redirect or update UI here after successful sign-in
+		// const params: urlParams = Object.fromEntries(new URLSearchParams(window.location.search));
+		// console.log('sign in params', params);
+
+		if (redirectURL)
+			window.location.href = redirectURL;
+		else
+			navigate('/');
+	}
+
 	async function createAccount() {
 		setLoadingAccount(true);
 		setError(null);
 		try {
-			const { isSignUpComplete, userId, nextStep } = await signUp({
+			const { isSignUpComplete, nextStep } = await signUp({
 				username: email,
 				password: password,
 				options: {
@@ -81,19 +108,14 @@ const SignUp: React.FC = () => {
 				}
 			});
 
-			if (!isSignUpComplete && nextStep == 'CONFIRM_SIGN_UP') {
-				// open popup and confirm
+			if (!isSignUpComplete && nextStep.signUpStep == 'CONFIRM_SIGN_UP') {
+				const details = nextStep.codeDeliveryDetails;
+				setSignUpMessage(`Confirmation code was sent via ${details.deliveryMedium?.toLocaleLowerCase()} to ${details.destination}. Please enter the code to confirm your acount.`)
+				setIsPopupTFAOpen(true);
+			} else {
+				signUserIn();
 			}
 
-			console.log('User signed up:', isSignUpComplete, userId, nextStep);
-			// Redirect or update UI here after successful sign-in
-			const params: urlParams = Object.fromEntries(new URLSearchParams(window.location.search));
-			console.log('sign in params', params);
-
-			if (params.redirect)
-				window.location.href = params.redirect;
-			else
-				navigate('/');
 		} catch (err: any) {
 			setError(err.message ?? 'Error signing in');
 		} finally {
@@ -103,27 +125,41 @@ const SignUp: React.FC = () => {
 	}
 
 	function closePopupTFA() {
-		setPopupTFAOpen(false);
+		setIsPopupTFAOpen(false);
+	}
+
+	function homeLink() {
+		navigate('/', { 'state': { redirectURL } });
 	}
 
 	async function init() {
 		const session = await fetchAuthSession();
 
 		if (session.credentials) {
-			// await signOut();
-			navigate('/signin')
+			navigate('/signin');
+		} else if (user) {
+			setIsPopupTFAOpen(true);
 		}
+
+		if (location.state?.email)
+			setEmail(location.state.email);
+		if (location.state?.password) {
+			setPassword(location.state.password);
+			setPassword2(location.state.password);
+		}
+
 		setPageLoading(false);
-		// init();
 	}
 
 	useEffect(() => {
+		console.log('sign up redirect', redirectURL);
+
 		init();
 	}, []);
 
 	return (
 		<div className='signin-page'>
-			<Navbar><h2>Create Account</h2></Navbar>
+			<Navbar homeLink={homeLink}><h2>Create Account</h2></Navbar>
 
 			<div className="block">
 				<div className="flex col gap justify-content-center">
@@ -191,7 +227,7 @@ const SignUp: React.FC = () => {
 						/>
 					</FormControl>
 
-					{error && <span style={{ color: 'red' }}>{error}</span>}
+					{error && <span className='color failure'>{error}</span>}
 
 					{!pageLoading && <div className="flex row gap">
 
@@ -206,7 +242,17 @@ const SignUp: React.FC = () => {
 
 			<Popup isOpen={isPopupTFAOpen} onClose={closePopupTFA}>
 				<h2>Confirmation</h2>
-				<span>Confirmation code was sent to {'someone here'}</span>
+				<div className="flex col gap" style={({ 'gap': '1.5rem' })}>
+					<span>{signUpMessage}</span>
+					<TextField label="Code"
+						variant="outlined"
+						value={verificationCode}
+						onChange={(e) => setVerificationCode(e.target.value.trim())}
+					></TextField>
+					<div className="flex justify-content-flex-end" >
+						<button className="button" onClick={confirmAccount}>Confirm</button>
+					</div>
+				</div>
 			</Popup>
 		</div>
 	);

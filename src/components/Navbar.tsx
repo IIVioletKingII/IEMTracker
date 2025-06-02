@@ -2,11 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import '../css/Navbar.css';
 import type { ReactNode } from 'react';
 
-export default function Navbar({ children }: { children: ReactNode }) {
+export default function Navbar({ children, homeLink }: { children: ReactNode, readonly homeLink?: Function }) {
 	const navigate = useNavigate();
 
 	function goHome() {
-		navigate('/', { 'state': { 'fromInsideApp': true } });
+		if (homeLink)
+			homeLink();
+		else
+			navigate('/', { 'state': { 'fromInsideApp': true } });
 	}
 
 	return (
