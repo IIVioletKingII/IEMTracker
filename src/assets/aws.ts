@@ -1,6 +1,7 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-import { CognitoIdentityProviderClient, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand, type AttributeType } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, AdminListGroupsForUserCommand, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
+import type { ListUsersCommandInput, AttributeType } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
@@ -8,6 +9,57 @@ import type { BorrowRecord, Token, UserAttributes } from './types';
 
 import { region, userPoolId, identityPoolId } from './security';
 import type { AwsCredentialIdentity } from "@aws-sdk/types";
+
+export type UserWithGroups = {
+	attributes: UserAttributes,
+	username: string,
+	groups: string[]
+}
+
+export async function getUsersWithGroups(credentials: AwsCredentialIdentity): Promise<UserWithGroups[]> {
+	const client = new CognitoIdentityProviderClient({ region, credentials });
+
+	let allUsers: any[] = [];
+	let paginationToken: string | undefined = undefined;
+
+	do {
+		const input: ListUsersCommandInput = {
+			UserPoolId: userPoolId,
+			PaginationToken: paginationToken,
+			Limit: 60, // Max limit is 60
+		};
+
+		const usersCommand = new ListUsersCommand(input);
+		const usersResponse = await client.send(usersCommand);
+
+		const users = usersResponse.Users ?? [];
+		allUsers.push(...users);
+
+		paginationToken = usersResponse.PaginationToken;
+	} while (paginationToken);
+
+	// Fetch groups in parallel
+	const usersWithGroups = await Promise.all(
+		allUsers.map(async (user) => {
+			const username = user.Username;
+			const groupsCommand = new AdminListGroupsForUserCommand({
+				Username: username!,
+				UserPoolId: userPoolId,
+			});
+
+			const groupsResponse = await client.send(groupsCommand);
+			const groups: string[] = groupsResponse.Groups?.map((g) => g.GroupName ?? '') ?? [];
+
+			return {
+				attributes: parseAttributes(user.Attributes),
+				username,
+				groups,
+			};
+		})
+	);
+
+	return usersWithGroups;
+}
 
 export async function getUsers(credentials: AwsCredentialIdentity) {
 	const client = new CognitoIdentityProviderClient({ region, credentials });
