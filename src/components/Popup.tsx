@@ -41,7 +41,7 @@ export default function Popup({ isOpen, onClose, children, keepAlive = false }: 
 		<div className={`popup-overlay ${hiddenClass}`}>
 			<div className="popup-content">
 				<button className="popup-close" onClick={onClose}>
-					<span className="material-icons">close</span>
+					<span className="material-symbols-rounded">close</span>
 				</button>
 				{children}
 			</div>

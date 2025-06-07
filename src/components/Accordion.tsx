@@ -12,7 +12,7 @@ const Accordion = ({ title, children }: { readonly title: string, readonly child
 		<div className='accordion'>
 			<button className='accordion-header' onClick={toggleAccordion}>
 				{title}
-				<span className={`accordion-icon material-icons ${isOpen ? 'open' : ''}`}>chevron_right</span>
+				<span className={`accordion-icon material-symbols-rounded ${isOpen ? 'open' : ''}`}>chevron_right</span>
 			</button>
 			{isOpen && <div className='accordion-content'>{children}</div>}
 		</div>

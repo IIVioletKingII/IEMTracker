@@ -147,7 +147,7 @@ button {
 	justify-content: center;
 }
 
-button>span.material-icons {
+button>span[class^="material-symbols"] {
 	padding: 0.5rem;
 }
 
@@ -206,4 +206,16 @@ button.shadow-click::after {
 
 .bg-color {
 	background-color: var(--color);
+}
+
+.filled[class^="material-symbols"] {
+	font-variation-settings:
+		'FILL' 1,
+		/* Fill the icon (1 = filled, 0 = outlined) */
+		'wght' 400,
+		/* weight */
+		'GRAD' 0,
+		/* grade */
+		'opsz' 48;
+	/* optical size */
 }

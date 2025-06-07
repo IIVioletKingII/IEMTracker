@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import 'material-icons/iconfont/material-icons.css';
+import 'material-symbols';
 import { userPoolId, userPoolWebClientId, identityPoolId } from './assets/security.ts';
 
 import './css/index.css'
@@ -37,10 +37,6 @@ Amplify.configure({
 
 createRoot(document.getElementById('root')!).render(
 	<StrictMode>
-		{/* <AuthProvider {...cognitoAuthConfig}> */}
 		<Router />
-		{/* <App /> */}
-
-		{/* </AuthProvider> */}
 	</StrictMode>
 )

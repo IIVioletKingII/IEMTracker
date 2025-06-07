@@ -2,6 +2,7 @@
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { fetchAuthSession, signOut } from '@aws-amplify/auth';
+import Version from '../components/Version';
 
 import '../css/Auth.css';
 
@@ -58,6 +59,7 @@ export default memo(function Auth() {
 				{isAdmin && (<Link className="button" to="/admin">Admin</Link>)}
 				{isAdmin && (<Link className="button" to="/users">Users</Link>)}
 				<button className="button" onClick={() => signOutRedirect()}>Sign out</button>
+				<Version />
 			</div>
 		);
 	}

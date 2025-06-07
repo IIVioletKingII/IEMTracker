@@ -5,7 +5,7 @@ export default function Record({ icon, classes = '', children }: { readonly icon
 
 	return (
 		<div className={`record-container align-items-center ${classes}`}>
-			<span className="material-icons">{icon}</span>
+			<span className="material-symbols-rounded">{icon}</span>
 			{children}
 		</div >
 	);

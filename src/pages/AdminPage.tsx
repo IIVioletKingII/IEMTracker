@@ -166,7 +166,7 @@ export default memo(function Page() {
 
 					<div className="title">IEMs not returned</div>
 					<button onClick={openQRCodePopup}>
-						<span className="material-icons">
+						<span className="material-symbols-rounded">
 							qr_code_scanner
 						</span>
 					</button>

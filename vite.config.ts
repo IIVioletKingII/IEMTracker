@@ -5,9 +5,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 // https://vite.dev/config/
 export default defineConfig({
 	base: '/IEMTracker',
-	define: {
-		global: {}
-	},
 	plugins: [
 		react(),
 		viteStaticCopy({

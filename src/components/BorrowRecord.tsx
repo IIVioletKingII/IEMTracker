@@ -107,10 +107,10 @@ return_date -> string;
 			<span className="name">{record.name}</span>
 			<span className="type">{record.earbud_type}</span>
 			<button onClick={openPopupA}>
-				<span className="material-icons">today</span>
+				<span className="material-symbols-rounded">today</span>
 			</button>
 			<button onClick={openPopupB}>
-				<span className="material-icons">event_available</span>
+				<span className="material-symbols-rounded">event_available</span>
 			</button>
 			<span>{returnString}</span>
 			{admin && <Checkbox checked={returned} onChange={handleChange} />}
@@ -144,7 +144,6 @@ return_date -> string;
 					<button className="button" onClick={returnIEMs}>Return</button>
 				</div>
 			</Popup>
-			{/* <input type="checkbox" /> */}
 		</Record>
 	);
 };

@@ -1,6 +1,6 @@
 // aws.ts
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
-import { CognitoIdentityProviderClient, AdminListGroupsForUserCommand, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminRemoveUserFromGroupCommand, AdminListGroupsForUserCommand, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import type { ListUsersCommandInput, AttributeType } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
@@ -15,6 +15,58 @@ export type UserWithGroups = {
 	username: string,
 	groups: string[]
 }
+
+export async function addUserToGroups(credentials: AwsCredentialIdentity, username: string, groupNames: string[]): Promise<Record<string, string>> {
+	const client = new CognitoIdentityProviderClient({ region, credentials });
+
+	const results: Record<string, string> = {};
+
+	for (const groupName of groupNames) {
+		const command = new AdminAddUserToGroupCommand({
+			Username: username,
+			GroupName: groupName,
+			UserPoolId: userPoolId,
+		});
+
+		try {
+			await client.send(command);
+			results[groupName] = 'success';
+			console.log(`Added ${username} from group ${groupName}`);
+		} catch (error: any) {
+			console.log(`Error adding ${username} from group ${groupName}\n${error.message}`);
+			results[groupName] = `error: ${error.message ?? 'unknown error'}`;
+		}
+	}
+
+	return results;
+}
+
+export async function removeUserFromGroups(credentials: AwsCredentialIdentity, username: string, groupNames: string[]): Promise<Record<string, string>> {
+	const client = new CognitoIdentityProviderClient({ region, credentials });
+
+	const results: Record<string, string> = {};
+
+	for (const groupName of groupNames) {
+		const command = new AdminRemoveUserFromGroupCommand({
+			Username: username,
+			GroupName: groupName,
+			UserPoolId: userPoolId,
+		});
+
+		try {
+			await client.send(command);
+			results[groupName] = 'success';
+			console.log(`Removed ${username} from group ${groupName}`);
+		} catch (error: any) {
+			console.log(`Error removing ${username} from group ${groupName}\n${error.message}`);
+			results[groupName] = `error: ${error.message ?? 'unknown error'}`;
+		}
+	}
+
+	return results;
+}
+
+
 
 export async function getUsersWithGroups(credentials: AwsCredentialIdentity): Promise<UserWithGroups[]> {
 	const client = new CognitoIdentityProviderClient({ region, credentials });
@@ -46,6 +98,8 @@ export async function getUsersWithGroups(credentials: AwsCredentialIdentity): Pr
 				Username: username!,
 				UserPoolId: userPoolId,
 			});
+
+			console.log('username', username);
 
 			const groupsResponse = await client.send(groupsCommand);
 			const groups: string[] = groupsResponse.Groups?.map((g) => g.GroupName ?? '') ?? [];

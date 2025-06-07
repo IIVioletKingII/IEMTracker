@@ -1,0 +1,6 @@
+.version {
+	position: fixed;
+	--indent: 1.5rem;
+	bottom: var(--indent);
+	left: var(--indent);
+}
