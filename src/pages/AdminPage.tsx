@@ -28,23 +28,29 @@ export default memo(function Page() {
 	const canvasRef = useRef(null);
 	const sessionRef = useRef<AuthSession | undefined>(undefined);
 
+	const [qrCodeVersion, setQRCodeVersion] = useState(0);
 	const [qrCodeUpdated, setQRCodeUpdated] = useState(new Date(0));
-	// const navigate = useNavigate();
 	const [items, setItems] = useState<BorrowRecord[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [inputName, setInputName] = useState('');
 	const [inputType, setInputType] = useState('');
-	const [inputDateTime, setInputDateTime] = useState<Date | null>(new Date());
+
+	const [checkoutDate, setCheckoutDate] = useState<Date | null>(new Date());
+	const [returnByDate, setReturnByDate] = useState<Date | null>(new Date());
 
 	function getCheckoutInfo(): BorrowRecord {
 		return {
 			name: inputName,
-			checkout_date: inputDateTime ? inputDateTime.toJSON() : new Date().toJSON(),
-			return_date: '',
+			checkout_date: checkoutDate ? checkoutDate.toJSON() : new Date().toJSON(),
+			returned_date: '',
 			earbud_type: inputType,
 			checkout_user_id: '',
-			return_by: new Date().toJSON()
+			return_by_date: returnByDate ? returnByDate.toJSON() : new Date().toJSON()
 		};
+	}
+
+	function hrsFromNow(hrs: number = 0) {
+		return new Date(Date.now() + hrs * 60 * 60 * 1000);
 	}
 
 	async function checkoutBud() {
@@ -69,21 +75,22 @@ export default memo(function Page() {
 		setQRCodeUpdated(new Date());
 		const session = sessionRef.current;
 		const profile = session?.tokens?.idToken?.payload;
-		console.log('createQRCode', session, session?.tokens, session?.tokens?.idToken);
+		console.log('createQRCode', session, profile);
 
 		if (session && profile) {
 
 			const username = profile['cognito:username'];
-			const email = profile.email;
+			const name = profile.nickname ?? (profile.name ?? profile.email);
 
-			if (session.credentials && typeof username == 'string' && typeof email == 'string') {
+			if (session.credentials && typeof username == 'string' && typeof name == 'string') {
 				const dynamoClient = getDynamoClientCreds(session.credentials);
 
 				const newItem: Token = {
 					token: crypto.randomUUID(),
 					date_created: new Date().toJSON(),
+					return_by_date: returnByDate ? returnByDate.toJSON() : hrsFromNow(3).toJSON(),
 					created_by_id: username,
-					created_by_name: email
+					created_by_name: name
 				};
 				console.log('newItem', newItem);
 
@@ -95,9 +102,13 @@ export default memo(function Page() {
 						const qrText = `${URI}/checkout?token=${newItem.token}`;
 						console.log('url', qrText);
 
+						setQRCodeVersion(qrCodeVersion + 1);
 						QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'H' }, (error: any) => {
-							if (error) console.error(error);
+							if (error) console.error('QRCode error:', error);
 						});
+					} else {
+						console.log('no canvas found');
+
 					}
 
 				} catch (error) {
@@ -109,17 +120,16 @@ export default memo(function Page() {
 
 	function openQRCodePopup() {
 		setIsQRPopupOpen(true);
-		let yesterday = new Date();
-		yesterday.setDate(yesterday.getDate() - 1);
-		if (qrCodeUpdated < yesterday)
-			createQRCode();
+		if (qrCodeUpdated < hrsFromNow(-24))
+			setReturnByDate(hrsFromNow(3))
+		// 	createQRCode();
 	}
 
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [isQRPopupOpen, setIsQRPopupOpen] = useState(false);
 
 	const openPopup = () => {
-		setInputDateTime(new Date());
+		setCheckoutDate(new Date());
 		setIsPopupOpen(true);
 	};
 
@@ -141,6 +151,8 @@ export default memo(function Page() {
 
 			fetchRecentBorrows(dynamoClient)
 				.then((response) => {
+					console.log('fetchRecentBorrows', response);
+
 					const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
 					console.log('itmes', response, condensed);
 
@@ -183,9 +195,18 @@ export default memo(function Page() {
 			<Popup isOpen={isQRPopupOpen} onClose={closeQRPopup} keepAlive={true}>
 				<h2>Checkout IEMs</h2>
 				<div className="flex col gap" style={({ 'gap': '1rem' })}>
-					<canvas ref={canvasRef} />
+					<LocalizationProvider dateAdapter={AdapterDateFns}>
+						<DateTimePicker
+							label="Return By Date & Time"
+							ampm={false} // 24-hour format
+							views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']} // include seconds
+							value={returnByDate}
+							onChange={(newValue) => setReturnByDate(newValue)}
+						/>
+					</LocalizationProvider>
+					<canvas className={qrCodeVersion > 0 ? '' : 'hidden'} ref={canvasRef} />
 					<div className="flex justify-content-flex-end">
-						<button className="button" onClick={createQRCode}>Refresh</button>
+						<button className="button" onClick={createQRCode}>{qrCodeVersion > 0 ? 'Refresh' : 'Generate'}</button>
 					</div>
 				</div>
 			</Popup>
@@ -205,11 +226,20 @@ export default memo(function Page() {
 						fullWidth></TextField>
 					<LocalizationProvider dateAdapter={AdapterDateFns}>
 						<DateTimePicker
-							label="Checkout Time"
+							label="Checkout Date & Time"
 							ampm={false} // 24-hour format
 							views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']} // include seconds
-							value={inputDateTime}
-							onChange={(newValue) => setInputDateTime(newValue)}
+							value={checkoutDate}
+							onChange={(newValue) => setCheckoutDate(newValue)}
+						/>
+					</LocalizationProvider>
+					<LocalizationProvider dateAdapter={AdapterDateFns}>
+						<DateTimePicker
+							label="Return By Date & Time"
+							ampm={false} // 24-hour format
+							views={['year', 'month', 'day', 'hours', 'minutes', 'seconds']} // include seconds
+							value={returnByDate}
+							onChange={(newValue) => setReturnByDate(newValue)}
 						/>
 					</LocalizationProvider>
 					<div className="flex justify-content-flex-end" >

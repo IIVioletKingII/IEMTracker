@@ -113,8 +113,23 @@ h1 {
 	margin-bottom: 2rem;
 }
 
+.margin-horizontal {
+	margin-left: 2rem;
+	margin-right: 2rem;
+}
+
 .margin-top {
 	margin-top: 1rem;
+}
+
+.padding-vertical {
+	padding-top: 2rem;
+	padding-bottom: 2rem;
+}
+
+.padding-horizontal {
+	padding-left: 2rem;
+	padding-right: 2rem;
 }
 
 .button {
@@ -218,4 +233,8 @@ button.shadow-click::after {
 		/* grade */
 		'opsz' 48;
 	/* optical size */
+}
+
+.tooltip-rounded {
+	border-radius: 2rem;
 }

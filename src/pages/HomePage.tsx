@@ -35,11 +35,6 @@ export default memo(function Page() {
 
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-	// const openPopup = () => {
-	// 	setInputDateTime(new Date());
-	// 	setIsPopupOpen(true);
-	// };
-
 	const closePopup = () => {
 		setIsPopupOpen(false);
 	};
@@ -52,12 +47,9 @@ export default memo(function Page() {
 			.then((response) => {
 				const condensed: BorrowRecord[] = response.Items?.map(item => flattenDBItem<BorrowRecord>(item)).sort(compareDateStrings) ?? [];
 
-				// const returnedItems = condensed.filter(item => item.return_date?.trim() !== '');
-				// const items = condensed.filter(item => !item.return_date || item.return_date.trim() === '');
-
 				const [items, returnedItems] = condensed.reduce<[BorrowRecord[], BorrowRecord[]]>(
 					([items, returned], item) => {
-						if (item.return_date?.trim())
+						if (item.returned_date?.trim())
 							returned.push(item);
 						else
 							items.push(item);

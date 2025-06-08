@@ -2,7 +2,7 @@
 import { fromCognitoIdentityPool } from '@aws-sdk/credential-provider-cognito-identity';
 import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminRemoveUserFromGroupCommand, AdminListGroupsForUserCommand, ListUsersCommand, GetUserCommand, UpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import type { ListUsersCommandInput, AttributeType } from '@aws-sdk/client-cognito-identity-provider';
-import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, ScanCommand, PutItemCommand, AttributeValue, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 import type { BorrowRecord, Token, UserAttributes } from './types';
@@ -192,14 +192,75 @@ export function getDynamoClientCreds(credentials: AwsCredentialIdentity) {
 
 // ------ EarbudBorrows ------
 export async function putBorrowRecord(client: DynamoDBClient, item: BorrowRecord) {
+
+	const awsItem = toAttributeMap(item);
+
 	const command = new PutItemCommand({
 		'TableName': 'EarbudBorrows',
-		'Item': {
+		'Item': awsItem
+		// {
+		// 'name': { S: item.name },
+		// 'checkout_date': { S: item.checkout_date },
+		// 'returned_date': { S: item.returned_date },
+		// 'earbud_type': { S: item.earbud_type },
+		// },
+	});
+
+	return client.send(command);
+}
+
+export async function updateBorrowField(
+	client: DynamoDBClient,
+	name: string,
+	field: keyof Omit<BorrowRecord, 'name'>,
+	value: string
+) {
+	const command = new UpdateItemCommand({
+		TableName: 'EarbudBorrows',
+		Key: {
+			name: { S: name },
+		},
+		UpdateExpression: `SET ${field} = :val`,
+		ExpressionAttributeValues: {
+			':val': { S: value },
+		},
+		ConditionExpression: 'attribute_exists(name)',
+	});
+
+	return client.send(command);
+}
+
+export async function updateBorrowRecord(client: DynamoDBClient, item: Partial<BorrowRecord> & { name: string, checkout_date: string }) {
+	const updates = [];
+	const expressionAttributeNames: Record<string, string> = {};
+	const expressionAttributeValues: Record<string, any> = {};
+
+	for (const key of Object.keys(item)) {
+		if (key === 'name' || key === 'checkout_date') continue;
+		const attrName = `#${key}`;
+		const attrValue = `:${key}`;
+		expressionAttributeNames[attrName] = key;
+		expressionAttributeValues[attrValue] = { S: (item as any)[key] };
+		updates.push(`${attrName} = ${attrValue}`);
+	}
+
+	if (updates.length === 0) {
+		throw new Error('No fields to update');
+	}
+
+	console.log('updates', updates);
+	console.log('updates,', updates.join(', '));
+
+
+	const command = new UpdateItemCommand({
+		TableName: 'EarbudBorrows',
+		Key: {
 			'name': { S: item.name },
 			'checkout_date': { S: item.checkout_date },
-			'return_date': { S: item.return_date },
-			'earbud_type': { S: item.earbud_type },
 		},
+		UpdateExpression: `SET ${updates.join(', ')}`,
+		ExpressionAttributeNames: expressionAttributeNames,
+		ExpressionAttributeValues: expressionAttributeValues,
 	});
 
 	return client.send(command);
@@ -251,11 +312,14 @@ export async function fetchTokens(client: DynamoDBClient) {
 }
 
 export async function putToken(client: DynamoDBClient, item: Token) {
+	// let obj = {};
+	// Object.keys(item).forEach(e => obj[e] = { 'S': item[e] })
 	const command = new PutItemCommand({
 		TableName: 'Tokens',
 		Item: {
 			token: { S: item.token },
 			date_created: { S: item.date_created },
+			return_by_date: { S: item.return_by_date },
 			created_by_id: { S: item.created_by_id },
 			created_by_name: { S: item.created_by_name }
 		},
@@ -296,7 +360,34 @@ function parseAttributeValue(value: AttributeValue): any {
 	return undefined; // fallback
 }
 
+function toAttributeMap(obj: Record<string, any>): Record<string, AttributeValue> {
+	const map: Record<string, AttributeValue> = {};
+	for (const key in obj) {
+		map[key] = toAttributeValue(obj[key]);
+	}
+	return map;
+}
 
+function toAttributeValue(value: any): AttributeValue {
+	if (value === null) return { NULL: true };
+	if (typeof value === 'string') return { S: value };
+	if (typeof value === 'number') return { N: value.toString() };
+	if (typeof value === 'boolean') return { BOOL: value };
+	if (Array.isArray(value)) {
+		return { L: value.map(toAttributeValue) };
+	}
+	if (value instanceof Uint8Array) {
+		return { B: value };
+	}
+	if (typeof value === 'object') {
+		const map: Record<string, AttributeValue> = {};
+		for (const key in value) {
+			map[key] = toAttributeValue(value[key]);
+		}
+		return { M: map };
+	}
+	throw new Error('Unsupported value type');
+}
 
 export function parseAttributes(arr: Array<AttributeType> | undefined): UserAttributes {
 

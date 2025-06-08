@@ -9,4 +9,9 @@
 
 canvas {
 	border-radius: 1rem;
+	margin: 0 auto;
+}
+
+.hidden {
+	display: none;
 }

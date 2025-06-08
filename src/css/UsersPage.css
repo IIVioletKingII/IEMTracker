@@ -1,3 +1,7 @@
 .nickname {
 	opacity: 0.7;
 }
+
+.record-container span>[class^="material-symbols"] {
+	margin: 0 0.5rem;
+}
