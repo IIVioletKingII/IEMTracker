@@ -1,7 +1,7 @@
 {
 	"name": "earbudborrowapp",
 	"private": true,
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"type": "module",
 	"homepage": "https://iivioletkingii.github.io/IEMTracker",
 	"scripts": {
