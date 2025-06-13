@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { signIn, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -18,6 +18,8 @@ const SignIn: React.FC = () => {
 
 	const location = useLocation();
 	const redirectURL: string = location.state?.redirectURL ?? '';
+
+	const pageLoadTime = useRef(Date.now());
 
 	const [pageLoading, setPageLoading] = useState(true);
 
@@ -39,11 +41,26 @@ const SignIn: React.FC = () => {
 		event.preventDefault();
 	};
 
-	async function handleSignIn() {
+	function changePassword(pw: string) {
+		// const oldPWLength = password.length;
+		setPassword(pw);
+		// check if new password was autofilled or pasted and auto sign in
+		// if ((pw.length > oldPWLength || pw.length < oldPWLength - 2)
+		// 	&& timeSInceLoad() > 500)
+		// 	handleSignIn(pw);
+	}
+
+	function timeSInceLoad() {
+		return Date.now() - pageLoadTime.current;
+	}
+
+	async function handleSignIn(pwOverride?: string) {
+		const actualPw = pwOverride ?? password;
+
 		setLoadingIn(true);
 		setError(null);
 		try {
-			const user = await signIn({ username: email, password });
+			const user = await signIn({ username: email, password: actualPw });
 			// Redirect or update UI here after successful sign-in
 			if (user.isSignedIn) {
 				if (redirectURL)
@@ -51,7 +68,7 @@ const SignIn: React.FC = () => {
 				else
 					navigate('/');
 			} else {
-				navigate('/signup', { 'state': { user, email, password, redirectURL } });
+				navigate('/signup', { 'state': { user, email, password: actualPw, redirectURL } });
 			}
 		} catch (err: any) {
 			setError(err.message ?? 'Error signing in');
@@ -104,7 +121,7 @@ const SignIn: React.FC = () => {
 							type={showPassword ? 'text' : 'password'}
 
 							value={password}
-							onChange={(e) => setPassword(e.target.value)}
+							onChange={(e) => changePassword(e.target.value)}
 							endAdornment={
 								<InputAdornment position="end">
 									<IconButton
@@ -129,7 +146,7 @@ const SignIn: React.FC = () => {
 
 					{!pageLoading && <div className="flex row gap">
 
-						{!signedIn && <button className='button' onClick={handleSignIn} disabled={loadingIn}>
+						{!signedIn && <button className='button' onClick={() => handleSignIn()} disabled={loadingIn}>
 							{loadingIn ? 'Signing in...' : 'Sign in'}
 						</button>}
 						{signedIn && <button className='button' onClick={handleSignOut} disabled={loadingOut}>
