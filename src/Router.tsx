@@ -1,7 +1,7 @@
 import { BrowserRouter as HashRouter, Routes, Route } from 'react-router-dom';
 import "./css/Router.css"
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 import Auth from "./components/Auth.tsx";
 import HeroPage from './pages/HeroPage.tsx'
@@ -18,15 +18,37 @@ import UsersPage from './pages/UsersPage.tsx';
 
 export default function Router() {
 
-	const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+	const [prefersDarkMode, setPrefersDarkMode] = useState(
+		window.matchMedia('(prefers-color-scheme: dark)').matches
+	);
 
-	const theme = useMemo(() =>
-		createTheme({
-			palette: {
-				mode: prefersDarkMode ? 'dark' : 'light',
-			},
-		}), [prefersDarkMode]);
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
+		// Listener to update state
+		const handleChange = (e: MediaQueryListEvent) => setPrefersDarkMode(e.matches);
+
+		mediaQuery.addEventListener('change', handleChange);
+
+		// Cleanup
+		return () => mediaQuery.removeEventListener('change', handleChange);
+	}, []);
+
+	const theme = useMemo(
+		() =>
+			createTheme({
+				palette: {
+					mode: prefersDarkMode ? 'dark' : 'light',
+				},
+			}),
+		[prefersDarkMode]
+	);
+
+	useEffect(() => {
+		const root = document.documentElement; // or document.body
+		root.classList.toggle('dark', prefersDarkMode);
+		root.classList.toggle('light', !prefersDarkMode);
+	}, [prefersDarkMode]);
 	return (
 		<ThemeProvider theme={theme}>
 			<HashRouter basename='/IEMTracker'>
@@ -86,6 +108,5 @@ export default function Router() {
 				</Routes>
 			</HashRouter>
 		</ThemeProvider>
-
 	);
 };

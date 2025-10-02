@@ -14,7 +14,7 @@ export default function Navbar({ children, homeLink }: { children: ReactNode, re
 
 	return (
 		<div className="header flex align-items-center" >
-			<img src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" />
+			<img className='white-image' src="/IEMTracker/NL-IEM-Tracker.png" alt="NL IEM Tracker" />
 			<div className='center'>
 				{children}
 			</div>

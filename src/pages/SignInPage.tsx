@@ -46,11 +46,11 @@ const SignIn: React.FC = () => {
 		setPassword(pw);
 		// check if new password was autofilled or pasted and auto sign in
 		// if ((pw.length > oldPWLength || pw.length < oldPWLength - 2)
-		// 	&& timeSInceLoad() > 500)
+		// 	&& timeSinceLoad() > 500)
 		// 	handleSignIn(pw);
 	}
 
-	// function timeSInceLoad() {
+	// function timeSinceLoad() {
 	// 	return Date.now() - pageLoadTime.current;
 	// }
 
