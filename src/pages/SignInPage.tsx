@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect/* , useRef */ } from 'react';
 import Navbar from '../components/Navbar';
 import { signIn, signOut, fetchAuthSession } from 'aws-amplify/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ const SignIn: React.FC = () => {
 	const location = useLocation();
 	const redirectURL: string = location.state?.redirectURL ?? '';
 
-	const pageLoadTime = useRef(Date.now());
+	// const pageLoadTime = useRef(Date.now());
 
 	const [pageLoading, setPageLoading] = useState(true);
 
@@ -50,9 +50,9 @@ const SignIn: React.FC = () => {
 		// 	handleSignIn(pw);
 	}
 
-	function timeSInceLoad() {
-		return Date.now() - pageLoadTime.current;
-	}
+	// function timeSInceLoad() {
+	// 	return Date.now() - pageLoadTime.current;
+	// }
 
 	async function handleSignIn(pwOverride?: string) {
 		const actualPw = pwOverride ?? password;
