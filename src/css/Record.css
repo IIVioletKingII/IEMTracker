@@ -24,8 +24,8 @@
 }
 
 
-.record-container.late {
-	border-color: red;
+.record-container.color-red {
+	border-color: var(--color-error, red);
 }
 
 .record-container:hover {

@@ -140,7 +140,7 @@ export default function HistoryRecord({ record, admin }: { readonly record: Borr
 		returnString = `Return by ${getCurrentTime(returnByDate)}`;
 
 	return (
-		<Record icon="headphones" classes={late ? 'late' : ''}>
+		<Record icon="headphones" classes={late ? 'color-red' : ''}>
 			<span className="text name">{record.name}</span>
 			<span className="text type">{record.earbud_type}</span>
 			<button className='shadow-click' onClick={openPopupA}>

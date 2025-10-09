@@ -109,7 +109,7 @@ const SignIn: React.FC = () => {
 			<div className="block">
 				<div className="flex col gap justify-content-center">
 
-					<TextField label="Name"
+					<TextField label="Email"
 						variant="outlined"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}

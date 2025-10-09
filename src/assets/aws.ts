@@ -266,15 +266,16 @@ export async function updateBorrowRecord(client: DynamoDBClient, item: Partial<B
 	return client.send(command);
 }
 
-export async function fetchRecentBorrows(client: DynamoDBClient) {
-	let fiveDaysAgo = new Date();
-	fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 10);
+export async function fetchRecentBorrows(client: DynamoDBClient, days: number = 3) {
+	const fiveDaysAgo = new Date();
+	fiveDaysAgo.setDate(fiveDaysAgo.getDate() - days);
 
 	const command = new ScanCommand({
 		TableName: 'EarbudBorrows',
-		FilterExpression: 'checkout_date > :start',
+		FilterExpression: 'checkout_date > :start OR returned_date = :empty',
 		ExpressionAttributeValues: {
 			':start': { S: fiveDaysAgo.toJSON() },
+			':empty': { 'S': '' }
 		},
 	});
 

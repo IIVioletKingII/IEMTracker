@@ -92,7 +92,7 @@ export default memo(function Page() {
 			<div className="block">
 				<div className="flex margin-vertical align-items-center justify-content-space-between">
 					<div className="title">{infoMessage}</div>
-					<div>Red: late</div>
+					<div className='text-color-red'>Red: late</div>
 				</div>
 
 				{isLoading ? (

@@ -25,7 +25,7 @@ function compareDateStrings(a: BorrowRecord, b: BorrowRecord): number {
 const URI = import.meta.env.VITE_PUBLIC_URI;
 
 export default memo(function Page() {
-	const canvasRef = useRef(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const sessionRef = useRef<AuthSession | undefined>(undefined);
 
 	const [qrCodeVersion, setQRCodeVersion] = useState(0);
@@ -102,13 +102,15 @@ export default memo(function Page() {
 						const qrText = `${URI}/checkout?token=${newItem.token}`;
 						console.log('url', qrText);
 
+						const parent = canvasRef.current.parentElement;
+						const size = parent ? parent.offsetWidth : 256; // fallback if no parent
+
 						setQRCodeVersion(qrCodeVersion + 1);
-						QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'H' }, (error: any) => {
+						QRCode.toCanvas(canvasRef.current, qrText, { errorCorrectionLevel: 'M', width: size }, (error: any) => {
 							if (error) console.error('QRCode error:', error);
 						});
 					} else {
 						console.log('no canvas found');
-
 					}
 
 				} catch (error) {
@@ -176,7 +178,7 @@ export default memo(function Page() {
 			<div className="block">
 				<div className="flex margin-vertical align-items-center gap justify-content-space-between">
 
-					<div className="title">IEMs not returned</div>
+					<div className="title text-color-red">IEMs not returned</div>
 					<button onClick={openQRCodePopup}>
 						<span className="material-symbols-rounded">
 							qr_code_scanner
@@ -188,7 +190,7 @@ export default memo(function Page() {
 				{isLoading ? (
 					<span>Loading...</span>
 				) : items.map((item) => (
-					<HistoryRecord key={item.name} record={item} admin={true} />
+					<HistoryRecord key={`${item.name}:${item.checkout_date}`} record={item} admin={true} />
 				))}
 			</div>
 
@@ -204,7 +206,9 @@ export default memo(function Page() {
 							onChange={(newValue) => setReturnByDate(newValue)}
 						/>
 					</LocalizationProvider>
-					<canvas className={qrCodeVersion > 0 ? '' : 'hidden'} ref={canvasRef} />
+					<div style={({ 'width': '100%' })}>
+						<canvas className={qrCodeVersion > 0 ? '' : 'hidden'} ref={canvasRef} />
+					</div>
 					<div className="flex justify-content-flex-end">
 						<button className="button" onClick={createQRCode}>{qrCodeVersion > 0 ? 'Refresh' : 'Generate'}</button>
 					</div>

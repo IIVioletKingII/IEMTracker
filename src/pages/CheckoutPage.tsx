@@ -25,6 +25,7 @@ export default memo(function Page() {
 
 	const [isCheckoutPopupOpen, setIsCheckoutPopupOpen] = useState(true);
 	const [isErrorPopupOpen, setIsErrorPopupOpen] = useState(false);
+	const [sendingRequest, setSendingRequest] = useState(false);
 
 	const params = Object.fromEntries(new URLSearchParams(window.location.search));
 
@@ -46,6 +47,8 @@ export default memo(function Page() {
 
 	async function checkout() {
 
+		setSendingRequest(true);
+
 		const session = sessionRef.current ?? await fetchAuthSession();
 		sessionRef.current = session;
 
@@ -63,11 +66,6 @@ export default memo(function Page() {
 		} else {
 			setError('Invalid credentials');
 		}
-
-		if (error) {
-			closeCheckoutPopup();
-			openErrorPopup();
-		}
 	}
 
 	async function checkoutIEMs(credentials: AwsCredentialIdentity, userId: string, token: string) {
@@ -79,14 +77,15 @@ export default memo(function Page() {
 			earbudType: inputType
 		};
 
+		console.log('Invoking checkout', payload);
 		const response = await invokeCheckoutEIMs(credentials, payload);
-		console.log('response', response);
 		const body = JSON.parse(response.body);
 		console.log('body', body);
 
 		if (response.statusCode === 200) {
 			console.log('Getting new borrows', response);
-			navigate('/home', { 'state': { 'fromInsideApp': true } })
+			setSendingRequest(false);
+			navigate('/home', { 'state': { 'fromInsideApp': true } });
 		} else {
 			console.log('Invalid response', response);
 			setError(body.message ?? 'Error: no error');
@@ -95,6 +94,14 @@ export default memo(function Page() {
 		}
 	}
 
+	useEffect(() => {
+		if (error) {
+			closeCheckoutPopup();
+			openErrorPopup();
+			setSendingRequest(false);
+		}
+	}, [error]);
+
 	function homeLink() {
 		navigate('/', { 'state': { redirectURL } });
 	}
@@ -102,7 +109,6 @@ export default memo(function Page() {
 	async function init() {
 
 		console.log('init checkout page');
-
 
 		const session = await fetchAuthSession();
 		sessionRef.current = session;
@@ -129,7 +135,7 @@ export default memo(function Page() {
 			<Popup isOpen={isCheckoutPopupOpen} onClose={closeCheckoutPopup}>
 				<h2>Checkout IEMs</h2>
 				<div className="flex col gap">
-					<TextField label="Name"
+					<TextField label="Name *"
 						variant="outlined"
 						value={inputName}
 						onChange={(e) => setInputName(e.target.value)}
@@ -143,13 +149,13 @@ export default memo(function Page() {
 						fullWidth
 					></TextField>
 					<div className="flex row justify-content-flex-end">
-						<button className='button' onClick={checkout}>Checkout</button>
+						<button className='button' disabled={sendingRequest} onClick={checkout}>{sendingRequest ? 'Checking Out...' : 'Checkout'}</button>
 					</div>
 				</div>
 			</Popup>
 			<Popup isOpen={isErrorPopupOpen} onClose={closeErrorPopup}>
 				<h2>Error</h2>
-				<span>{error}</span>
+				<div className='margin-vertical-half'>{error}</div>
 				<div className="flex row justify-content-flex-end">
 					<button className='button' onClick={closeErrorPopup}>Close</button>
 				</div>
